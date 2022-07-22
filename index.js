@@ -78,7 +78,7 @@ async function setupMatch(data) {
 
     const password = Math.random().toString(36).substring(8);
     // await lobby.setPassword(password);
-    await lobby.setPassword("12345678");
+    await lobby.setPassword("1");
 
     lobby.setSettings(data.required.team_mode, data.required.score_mode, lobbySize);
 
@@ -92,7 +92,7 @@ async function setupMatch(data) {
     }
 
     for (const p of data.required.teams.team_2.player_names) {
-        team_1_players.push(client.getUser(p));
+        team_2_players.push(client.getUser(p));
     }
     
     // Inviting all players from team 1 and team 2
@@ -299,37 +299,48 @@ async function createPMListeners() {
     client.on("PM", async (message) => {
         const content = message.message;
         const sender = message.user;
+        // console.log("message");
+        // console.log(message);
 
-        if (content.startsWith("!")) {
-            const msg = content.substring(1).split(' ');
+        if (message.self || sender.ircUsername === "BanchoBot" ||
+            (!message.self && sender.ircUsername === message.recipient.ircUsername)) return; // TODO: perhaps bandaid fix?
 
-            // TODO: move this to a different file for cleanliness
-            switch (msg[0]) {
-                case "commands":
-                    await sender.sendMessage(fetchmsg.fetchMessage("!commands"));
-                    break;
-                case "invite":
-                    if (lobby === null) {
-                        await sender.sendMessage(fetchmsg.fetchMessage("no_pending_matches"));
-                    }
+        // TODO: when I PM myself, I get "You have not yet joined this channel" from BanchoBot
 
-                    await sender.sendMessage(fetchmsg.fetchMessage("!invite"));
-                    await lobby.invitePlayer(sender.ircUsername);
-                    break;
-                case "startnow":
-                    // first determine if there is a pending match
-                    break;
-                case "acceptstartnow":
-                    // first determine if there is a pending request
-                    break;
-                default:
-                    await sender.sendMessage(fetchmsg.fetchMessage("default"));
-                    break;
+        if (!message.self) {
+            if (content.startsWith("!")) { 
+                const msg = content.substring(1).split(' ');
+    
+                // TODO: move this to a different file for cleanliness
+                switch (msg[0]) {
+                    case "commands":
+                        await sender.sendMessage(fetchmsg.fetchMessage("!commands"));
+                        break;
+                    case "invite":
+                        if (lobby === null) {
+                            await sender.sendMessage(fetchmsg.fetchMessage("no_pending_matches"));
+                        }
+    
+                        await sender.sendMessage(fetchmsg.fetchMessage("!invite"));
+                        await lobby.invitePlayer(sender.ircUsername);
+                        break;
+                    case "startnow":
+                        // first determine if there is a pending match
+                        break;
+                    case "acceptstartnow":
+                        // first determine if there is a pending request
+                        break;
+                    default:
+                        await sender.sendMessage(fetchmsg.fetchMessage("default"));
+                        break;
+                }
+            } else {
+                console.log("a problematic message has occurred. this should not be reached just yet. the message:");
+                console.log(content);
+                await sender.sendMessage(fetchmsg.fetchMessage("default"));
             }
-        } else if (!content.startsWith("!") && !message.self) {
-            await sender.sendMessage(fetchmsg.fetchMessage("default"));
         }
-    })
+    });
 }
 
 function determineTeam(playerName, teams) {
