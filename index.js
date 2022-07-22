@@ -1,6 +1,6 @@
 const Banchojs = require("bancho.js");
 
-const version = "0.2.0";
+const version = "0.2.1";
 const lobbySize = 16;
 
 const ircConfig = require('./irc_config.json');
@@ -71,7 +71,6 @@ async function setupMatch(data) {
 
     channel = await client.createLobby(`${data.required.tournament_initials}: (${data.required.teams.team_1.team_name}) vs (${data.required.teams.team_2.team_name})`)
     lobby = channel.lobby;
-    createLobbyListeners(lobby);
 
     const password = Math.random().toString(36).substring(8);
     // await lobby.setPassword(password);
@@ -98,14 +97,15 @@ async function setupMatch(data) {
         await p.sendMessage(fetchmsg.fetchMessage("welcome").replace("<version>", version));
         await p.sendMessage(fetchmsg.fetchMessage("15_mins_before_match").replace("<tournament_initials>", data.required.tournament_initials)
                                                                 .replace("<player_name>", data.required.teams.team_2.team_name));
-        await lobby.invitePlayer(p.username);
+        
+        await lobby.invitePlayer(p.ircUsername);
     }
 
     for (const p of team_2_players) {
         await p.sendMessage(fetchmsg.fetchMessage("welcome").replace("<version", version));
         await p.sendMessage(fetchmsg.fetchMessage("15_mins_before_match").replace("<tournament_initials>", data.required.tournament_initials)
                                                                      .replace("<player_name>", data.required.teams.team_1.team_name));
-        await lobby.invitePlayer(p.username);
+        await lobby.invitePlayer(p.ircUsername);
     }
 
     
@@ -130,24 +130,30 @@ function banPhase(firstToBan, firstToPick, data) {
 
     // read in the bans from each player
     channel.on("message", this.eventListener = async (message) => { // TODO: DOES THIS WORK?
+        console.log("reached");
         const content = message.message;
         const sender = message.user;
 
+        // make sure the bot doesn't take its own response as a map ban
+        if (message.self) {
+            return;
+        }
+
         // make sure the right team bans
-        if (banTeam !== determineTeam(sender.username, data.required.teams)) {
-            await channel.sendMessage(fetchmsg.fetchMessage("ban_wrong_player").replace("<player_name>", sender.username));
+        if (banTeam !== determineTeam(sender.ircUsername, data.required.teams)) {
+            await channel.sendMessage(fetchmsg.fetchMessage("ban_wrong_player").replace("<player_name>", sender.ircUsername));
             return; // TODO: does this work
         }
 
         // make sure the ban is a valid ban
         if (!available_bans.includes(content)) {
-            await channel.sendMessage(fetchmsg.fetchMessage("ban_wrong_id").replace("<player_name>", sender.username)
+            await channel.sendMessage(fetchmsg.fetchMessage("ban_wrong_id").replace("<player_name>", sender.ircUsername)
                                                             .replace("<maps_available>", available_bans.toString()));
             return; // TODO: does this work
         }
 
         // the ban is valid and sent by the right team, we proceed
-        if (banTeam === data.teams.team_1.team_name) {
+        if (banTeam === data.required.teams.team_1.team_name) {
             team_1_bans.push(content);
         } else {
             team_2_bans.push(content);
@@ -168,13 +174,14 @@ function banPhase(firstToBan, firstToPick, data) {
             pickPhase(firstToPick, data); // TODO: is this right way to exit
         } else {
             // change banTeam and banTurn
+            await lobby.abortTimer();
             if (banTeam !== firstToBan) {
                 banTurn += 1;
             }
-            banTeam = banTeam === data.teams.team_1.team_name ? data.teams.team_2.team_name : data.teams.team_1.team_name;
+            banTeam = banTeam === data.required.teams.team_1.team_name ? data.required.teams.team_2.team_name : data.required.teams.team_1.team_name;
             await channel.sendMessage(fetchmsg.fetchMessage("ban_start").replace("<player_name>", banTeam)
                                                                .replace("<ban_total>", banTurn)
-                                                               .replace("<maps_available>", "")
+                                                               .replace("<maps_available>", available_bans.toString())
                                                                .replace("<ban_time>", data.optional.ban_pick_time));
             await lobby.startTimer(parseInt(data.optional.ban_pick_time));
 
@@ -190,26 +197,34 @@ function pickPhase(firstToPick, data) {
 function createLobbyListeners(data) {
     // the lobby can only be "full" if the last action is a player joining, so we don't
     // need any other lobby listeners like playerLeft
-    lobby.on("playedJoined", this.eventListener = async (object) => {
+    lobby.on("playerJoined", this.eventListener = async (object) => {
         let team_1_players_in_lobby = 0;
         let team_2_players_in_lobby = 0;
+
         // check if all players join and time has elapsed, then we can start the match
-        for (const p of lobby.slots) {
-            if (p !== null) {
-                const username = p.username;
-                if (data.required.teams.team_1.player_names.includes(username)) {
-                    team_1_players_in_lobby += 1;
-                }
-                if (data.required.teams.team_2.player_names.includes(username)) {
-                    team_2_players_in_lobby += 1;
+        if (data.required.date - Date.now() <= 0) {
+            for (const p of lobby.slots) {
+                if (p !== null) {
+                    const username = p.user.ircUsername; // special case here since it's BanchoLobbyPlayer
+                    if (data.required.teams.team_1.player_names.includes(username)) {
+                        team_1_players_in_lobby += 1;
+                    }
+                    if (data.required.teams.team_2.player_names.includes(username)) {
+                        team_2_players_in_lobby += 1;
+                    }
                 }
             }
         }
 
+
         if (team_1_players_in_lobby >= data.required.team_size && team_2_players_in_lobby >= data.required.team_size) {
             // both teams have enough players in lobby. the match can now start.
             channel.removeListener("playedJoined", this.eventListener);
-            rollPhase(data);
+            // await channel.sendMessage(fetchmsg.fetchMessage("roll").replace("<player_name>", sender.ircUsername));
+            
+            await channel.sendMessage(fetchmsg.fetchMessage("ban_start"));
+            banPhase("lolol234", "lolol234", data);
+            // rollPhase(data);
         }
     });
 }
@@ -229,7 +244,7 @@ function createPMListeners() {
                     break;
                 case "invite":
                     await sender.sendMessage(fetchmsg.fetchMessage("!invite"));
-                    await lobby.invitePlayer(sender.username);
+                    await lobby.invitePlayer(sender.ircUsername);
                     break;
                 case "startnow":
                     // first determine if there is a pending match
