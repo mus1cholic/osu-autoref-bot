@@ -1,6 +1,6 @@
 const Banchojs = require("bancho.js");
 
-const version = "0.2.3";
+const version = "0.2.4";
 const lobbySize = 16;
 
 const ircConfig = require('./irc_config.json');
@@ -53,7 +53,11 @@ async function init() {
         process.exit(1);
     }
 
-    console.log("Successfully connected to Bancho. Parsing match data json...");
+    console.log("Successfully connected to Bancho. Enabling PM listeners...");
+
+    createPMListeners();
+
+    console.log("Parsing match data json...");
 
     const data = reorderData(tournamentConfig);
 
@@ -110,9 +114,9 @@ async function setupMatch(data) {
 
     await lobby.startTimer(15 * 60);
 
-    // Send a message 5 mins before match
+    // TODO: Send a message 5 mins before match
 
-    // Send a message with match time
+    // TODO: Send a message with match time
  
     await createLobbyListeners(data);
 }
@@ -139,16 +143,13 @@ async function createLobbyListeners(data) {
             }
         }
 
-
         if (team_1_players_in_lobby >= data.required.team_size && team_2_players_in_lobby >= data.required.team_size) {
             // both teams have enough players in lobby. the match can now start.
             channel.removeListener("playedJoined", this.eventListener);
             await lobby.abortTimer();
 
-
             await channel.sendMessage(fetchmsg.fetchMessage("roll_start"));
             
-            // banPhase("lolol234", "lolol234", data);
             await rollPhase(data);
         }
     });
@@ -163,7 +164,7 @@ async function rollPhase(data) {
     let rolls = {};
 
     rolls[data.required.teams.team_1.team_name] = -1;
-    rolls[data.required.teams.team_2.team_name] = -1;
+    rolls[data.required.teams.team_2.team_name] = 0;
 
     channel.on("message", this.eventListener = async (msg) => {
         // thanks @clxxiii for this piece of code
@@ -194,19 +195,29 @@ async function rollPhase(data) {
             rolls[data.required.teams.team_2.team_name] = roll;
         }
 
+        // TODO: handle ties between rolls
+
         console.log(rolls);
 
         // now we check whether both players have rolled, if so roll phase is over and we can start banning phase
 
         if (rolls[data.required.teams.team_1.team_name] !== -1 && rolls[data.required.teams.team_2.team_name] !== -1) {
             channel.removeListener("message", this.eventListener);
+
+            const rollWinner = rolls[data.required.teams.team_1.team_name] > rolls[data.required.teams.team_2.team_name]
+                                                                           ? data.required.teams.team_1.team_name
+                                                                           : data.required.teams.team_2.team_name;
+            const rollLoser = rollWinner === data.required.teams.team_1.team_name ? data.required.teams.team_2.team_name
+                                                                                  : data.required.teams.team_1.team_name;
+
+            await channel.sendMessage(fetchmsg.fetchMessage("roll_winner_sequence").replace("<player_name>", rollWinner));
             
-            await processRollsPhase(data)
+            await processRollsPhase(rollWinner, rollLoser, data);
         } 
     });
 }
 
-async function processRollsPhase(data) {
+async function processRollsPhase(rollWinner, rollLoser, data) {
     // await banPhase("lolol234", "lolol234", data);   
 }
 
@@ -298,6 +309,10 @@ async function createPMListeners() {
                     await sender.sendMessage(fetchmsg.fetchMessage("!commands"));
                     break;
                 case "invite":
+                    if (lobby === null) {
+                        await sender.sendMessage(fetchmsg.fetchMessage("no_pending_matches"));
+                    }
+
                     await sender.sendMessage(fetchmsg.fetchMessage("!invite"));
                     await lobby.invitePlayer(sender.ircUsername);
                     break;
@@ -321,13 +336,8 @@ function determineTeam(playerName, teams) {
     // usually, if the player is not in team 1, the player must be in team 2.
     // however, if a player not in both teams comes into the lobby and types
     // it will mess up the system, so we check for both
-    if (teams.team_1.player_names.includes(playerName)) {
-        return teams.team_1.team_name;
-    }
-
-    if (teams.team_2.player_names.includes(playerName)) {
-        return teams.team_2.team_name;
-    }
+    if (teams.team_1.player_names.includes(playerName)) return teams.team_1.team_name;
+    if (teams.team_2.player_names.includes(playerName)) return teams.team_2.team_name;
 
     return false;
 }

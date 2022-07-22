@@ -19,6 +19,8 @@ module.exports = {
                 return "It seems that you are currently in a match and are not in the lobby. If you need another invite, please type !invite."
             case "roll_start":
                 return "The required players have joined the lobby, the match will start now. Please roll in order to determine ban/pick sequence."
+            case "roll_tie":
+                return "The roll is a tie. Please roll again."
             case "roll_winner_sequence":
                 return "<player_name> has won the roll. Please select from the following choices: <sequence>."
             case "roll_loser_sequence":
@@ -74,6 +76,8 @@ module.exports = {
             case "!startnow":
                 return "<player_name>, your opponent has requested to start the match now instead of <datetime>. If you wish to accept, please type !acceptstartnow"
             case "start_now_error":
+                return "Error: you do not have a pending match."
+            case "no_pending_matches":
                 return "Error: you do not have a pending match."
             case "!acceptstartnow":
                 return "You have accepted the request. The match will now be starting. Please join the lobby. If you need an invite, please type !invite."
