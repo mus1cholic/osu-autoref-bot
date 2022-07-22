@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/mus1cholic/osu-autoref-bot/issues"
   },
-  "homepage": "https://github.com/mus1cholic/osu-autoref-bot#readme"
+  "homepage": "https://github.com/mus1cholic/osu-autoref-bot#readme",
+  "devDependencies": {
+    "eslint": "^8.20.0"
+  }
 }

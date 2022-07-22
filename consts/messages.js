@@ -17,8 +17,12 @@ module.exports = {
                 return "You have automatically forfeited your <tournament_initials> match against <player_name> due to <x> minutes being passed."
             case "not_in_lobby":
                 return "It seems that you are currently in a match and are not in the lobby. If you need another invite, please type !invite."
-            case "roll":
-                return "The match will start now. Both players, please roll now in order to determine ban/pick sequence."
+            case "roll_start":
+                return "The required players have joined the lobby, the match will start now. Please roll in order to determine ban/pick sequence."
+            case "roll_winner_sequence":
+                return "<player_name> has won the roll. Please select from the following choices: <sequence>."
+            case "roll_loser_sequence":
+                return "<player_name>, please select from the following choices: <sequence>."
             case "ban_start":
                 return "<player_name>, please ban your <ban_total> map. Valid bans are <maps_available>. You have <ban_time> seconds."
             case "ban_wrong_player":
