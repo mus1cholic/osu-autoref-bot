@@ -1,0 +1,51 @@
+{
+    "required": {
+        "tournament_initials": "TEST",
+        "team_mode": "1v1",
+        "team_size": "1",
+        "teams": {
+            "team_1": {
+                "team_name": "lolol234",
+                "player_ids": ["5791401"],
+                "player_names": ["lolol234"]
+            },
+            "team_2": {
+                "team_name": "lolol234",
+                "player_ids": ["5791401"],
+                "player_names": ["lolol234"]
+            }
+        },
+        "pool": {
+            "nm1": "2526166",
+            "nm2": "2680248",
+            "nm3": "3608521",
+            "nm4": "3066436",
+            "nm5": "2881154",
+            "nm6": "2651787",
+            "hd1": "3459467",
+            "hd2": "3556182",
+            "hd3": "1495664",
+            "hr1": "2675756",
+            "hr2": "2541434",
+            "hr3": "1771721",
+            "dt1": "1850680",
+            "dt2": "3155266",
+            "dt3": "3256526"
+        },
+        "date": "2022-07-22T09:00:00Z",
+        "bo": "5"
+    },
+
+    "optional": {
+        "match_title": "<tournament_initials>: <team_1_players> vs <team_2_players>",
+        "score_mode": "v2",
+        "forfeit_time": "600",
+        "fails_count": "true",
+        "bans": "2",
+        "roll_system": "ukcc",
+        "ban_pick_time": "90",
+        "map_wait_time": "90",
+        "reserve_time": "300",
+        "abort_rules": "default"
+    }
+}

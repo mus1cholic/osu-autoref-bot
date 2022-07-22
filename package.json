@@ -1,0 +1,20 @@
+{
+  "name": "osu-autoref-bot",
+  "version": "0.1.2",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mus1cholic/osu-autoref-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mus1cholic/osu-autoref-bot/issues"
+  },
+  "homepage": "https://github.com/mus1cholic/osu-autoref-bot#readme"
+}
