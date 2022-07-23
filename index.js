@@ -1,13 +1,13 @@
 const Banchojs = require("bancho.js");
 
-const version = "0.2.4";
+const version = "0.2.5";
 const lobbySize = 16;
 
 const ircConfig = require('./irc_config.json');
 const tournamentConfig = require('./tournament_config.json')
 
-// import fetchmsg.fetchMessage from "./consts/messages.js";
 const fetchmsg = require('./consts/messages');
+const rollSystems = require('./consts/rollSystems');
 
 const client = new Banchojs.BanchoClient(ircConfig);
 let channel, lobby;
@@ -217,8 +217,10 @@ async function rollPhase(data) {
     });
 }
 
-async function processRollsPhase(rollWinner, rollLoser, data) {
-    // await banPhase("lolol234", "lolol234", data);   
+async function determineBanPickSequencePhase(rollWinner, rollLoser, data) {
+    const banPickFirst = rollSystems.processRollSystems(rollWinner, rollLoser, data, channel, determineTeam);
+
+    await banPhase(banPickFirst[0], banPickFirst[1], data);   
 }
 
 async function banPhase(firstToBan, firstToPick, data) {
@@ -236,9 +238,7 @@ async function banPhase(firstToBan, firstToPick, data) {
         const sender = message.user;
 
         // make sure the bot doesn't take its own response as well as banchobot as a map ban
-        if (message.self || sender.ircUsername === "BanchoBot") {
-            return;
-        }
+        if (message.self || sender.ircUsername === "BanchoBot") return;
 
         // make sure the right team bans
         if (banTeam !== determineTeam(sender.ircUsername, data.required.teams)) {
@@ -247,6 +247,7 @@ async function banPhase(firstToBan, firstToPick, data) {
         }
 
         // make sure the ban is a valid ban
+        // TODO: case insensitive
         if (!available_bans.includes(content)) {
             await channel.sendMessage(fetchmsg.fetchMessage("ban_wrong_id").replace("<player_name>", sender.ircUsername)
                                                             .replace("<maps_available>", available_bans.toString()));

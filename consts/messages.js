@@ -25,6 +25,10 @@ module.exports = {
                 return "<player_name> has won the roll. Please select from the following choices: <sequence>."
             case "roll_loser_sequence":
                 return "<player_name>, please select from the following choices: <sequence>."
+            case "roll_sequence_wrong_player":
+                return "<player_name>, it is not your turn to choose yet!"
+            case "roll_sequence_wrong_id":
+                return "<player_name>, you have entered a wrong choice. Valid choices are <sequence>."
             case "ban_start":
                 return "<player_name>, please ban your <ban_total> map. Valid bans are <maps_available>. You have <ban_time> seconds."
             case "ban_wrong_player":
