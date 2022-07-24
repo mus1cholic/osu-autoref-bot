@@ -1,7 +1,6 @@
 const Banchojs = require("bancho.js");
 
-const version = "0.2.6";
-const lobbySize = 16;
+const CONSTANTS = require('./consts/consts');
 
 const ircConfig = require('./irc_config.json');
 const tournamentConfig = require('./tournament_config.json');
@@ -11,7 +10,8 @@ const rollSystems = require('./consts/rollSystems');
 
 const client = new Banchojs.BanchoClient(ircConfig);
 let channel, lobby;
-let currentTimeout = {"tournament_match": ""}; // TODO: not sure if this is the best way to do this
+let interrupt = false;
+let currentTimeout;
 
 function reorderData(config) {
     const newData = JSON.parse(JSON.stringify(config));
@@ -44,7 +44,7 @@ function reorderData(config) {
 }
 
 async function init() {
-    console.log(`Initializing AutoRef bot v${version}...`);
+    console.log(`Initializing AutoRef bot v${constants.VERSION}...`);
 
     try {
         await client.connect();
@@ -81,7 +81,7 @@ async function setupMatch(data) {
     // await lobby.setPassword(password);
     await lobby.setPassword("1");
 
-    lobby.setSettings(data.required.team_mode, data.required.score_mode, lobbySize);
+    lobby.setSettings(data.required.team_mode, data.required.score_mode, CONSTANTS.LOBBY_SIZE);
 
     // Setting up all the players
 
@@ -99,7 +99,7 @@ async function setupMatch(data) {
     // Inviting all players from team 1 and team 2
 
     for (const p of team_1_players) {
-        await p.sendMessage(fetchmsg.fetchMessage("welcome").replace("<version>", version));
+        await p.sendMessage(fetchmsg.fetchMessage("welcome").replace("<version>", CONSTANTS.VERSION));
         await p.sendMessage(fetchmsg.fetchMessage("15_mins_before_match").replace("<tournament_initials>", data.required.tournament_initials)
                                                                 .replace("<player_name>", data.required.teams.team_2.team_name));
         
@@ -107,13 +107,13 @@ async function setupMatch(data) {
     }
 
     for (const p of team_2_players) {
-        await p.sendMessage(fetchmsg.fetchMessage("welcome").replace("<version>", version));
+        await p.sendMessage(fetchmsg.fetchMessage("welcome").replace("<version>", CONSTANTS.VERSION));
         await p.sendMessage(fetchmsg.fetchMessage("15_mins_before_match").replace("<tournament_initials>", data.required.tournament_initials)
                                                                      .replace("<player_name>", data.required.teams.team_1.team_name));
         await lobby.invitePlayer(p.ircUsername);
     }
 
-    await lobby.startTimer(15 * 60);
+    await lobby.startTimer(CONSTANTS.FIFTEEN_MINS);
 
     // Send messages before match, but only do it if both players havent joined the lobby yet
 
@@ -152,15 +152,19 @@ async function setupMatch(data) {
                 }, 60 * 5 * 100, dest);
             }, 60 * 5 * 100, dest);
         }, 60 * 5 * 100, dest);
-    }, 60 * 5 * 100, team_1_players.concat(team_2_players), true);
+    }, 60 * 5 * 100, team_1_players.concat(team_2_players), interrupt);
 
     await createLobbyListeners(data);
 }
 
 // func is function to run after seconds seconds
-// TODO: interrupt
+// TODO: immediate interrupts
 async function startTimeout(func, seconds, dest, interrupt) {
     if (!interrupt) setTimeout(func, seconds, dest, interrupt);
+}
+
+async function interruptStartTimeout() {
+
 }
 
 async function createLobbyListeners(data) {
@@ -192,7 +196,7 @@ async function createLobbyListeners(data) {
             // TODO: make this not default behavior but instead activate on !startnow command
             // since both players already joined the lobby, we can 
             await lobby.abortTimer();
-            currentTimeout = null;
+            interrupt = true;
 
             await channel.sendMessage(fetchmsg.fetchMessage("roll_start"));
             
