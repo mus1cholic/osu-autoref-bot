@@ -1,17 +1,16 @@
 const Banchojs = require("bancho.js");
 
 const CONSTANTS = require('./consts/consts');
+const fetchmsg = require('./consts/messages');
+const rollSystems = require('./consts/rollSystems');
 
 const ircConfig = require('./irc_config.json');
 const tournamentConfig = require('./tournament_config.json');
 
-const fetchmsg = require('./consts/messages');
-const rollSystems = require('./consts/rollSystems');
-
 const client = new Banchojs.BanchoClient(ircConfig);
 let channel, lobby;
-let interrupt = false;
-let currentTimeout;
+
+let currentTimeout; // match phases are linear so we don't need to initialize as array
 
 function reorderData(config) {
     const newData = JSON.parse(JSON.stringify(config));
@@ -44,7 +43,7 @@ function reorderData(config) {
 }
 
 async function init() {
-    console.log(`Initializing AutoRef bot v${constants.VERSION}...`);
+    console.log(`Initializing AutoRef bot v${CONSTANTS.VERSION}...`);
 
     try {
         await client.connect();
@@ -84,7 +83,6 @@ async function setupMatch(data) {
     lobby.setSettings(data.required.team_mode, data.required.score_mode, CONSTANTS.LOBBY_SIZE);
 
     // Setting up all the players
-
     let team_1_players = [];
     let team_2_players = [];
 
@@ -120,7 +118,6 @@ async function setupMatch(data) {
     startTimeout(async function (dest) {
         // send 5_mins_before_match after 10 minutes has elapsed
         for (const p of dest) {
-            console.log("reached 1");
             await p.sendMessage(fetchmsg.fetchMessage("5_mins_before_match").replace("<tournament_initials>", data.required.tournament_initials)
                                                                             .replace("<player_name>", data.required.teams.team_1.team_name));
         }
@@ -128,7 +125,6 @@ async function setupMatch(data) {
         startTimeout(async function (dest) {
             // send match_now after 5 minutes has elapsed
             for (const p of dest) {
-                console.log("reached 2");
                 await p.sendMessage(fetchmsg.fetchMessage("match_now").replace("<tournament_initials>", data.required.tournament_initials)
                                                                       .replace("<player_name>", data.required.teams.team_1.team_name));
             }
@@ -136,7 +132,6 @@ async function setupMatch(data) {
             startTimeout(async function (dest) {
                 // send 5_mins_over after 5 minutes has elapsed
                 for (const p of dest) {
-                    console.log("reached 3");
                     await p.sendMessage(fetchmsg.fetchMessage("5_mins_over").replace("<tournament_initials>", data.required.tournament_initials)
                                                                             .replace("<player_name>", data.required.teams.team_1.team_name));
                 }
@@ -144,7 +139,6 @@ async function setupMatch(data) {
                 startTimeout(async function(dest) {
                     // send forfeit after 5 minutes has elapsed
                     for (const p of dest) {
-                        console.log("reached 4");
                         await p.sendMessage(fetchmsg.fetchMessage("forfeit").replace("<tournament_initials>", data.required.tournament_initials)
                                                                             .replace("<player_name>", data.required.teams.team_1.team_name)
                                                                             .repeat("<forfeit_time>", data.forfeit_time / 60));
@@ -152,19 +146,21 @@ async function setupMatch(data) {
                 }, 60 * 5 * 100, dest);
             }, 60 * 5 * 100, dest);
         }, 60 * 5 * 100, dest);
-    }, 60 * 5 * 100, team_1_players.concat(team_2_players), interrupt);
+    }, 60 * 5 * 100, team_1_players.concat(team_2_players));
 
     await createLobbyListeners(data);
 }
 
-// func is function to run after seconds seconds
-// TODO: immediate interrupts
-async function startTimeout(func, seconds, dest, interrupt) {
-    if (!interrupt) setTimeout(func, seconds, dest, interrupt);
+async function startTimeout(func, seconds, dest) {
+    // if (!interrupt) setTimeout(func, seconds, dest, interrupt);
+    currentTimeout = setTimeout(func, seconds, dest);
 }
 
+// TODO: what happens if this is right before setTimeout updates?
+// perhaps need to do another local interrupt to make sure it actually clears
 async function interruptStartTimeout() {
-
+    clearTimeout(currentTimeout);
+    currentTimeout = null;
 }
 
 async function createLobbyListeners(data) {
@@ -196,7 +192,7 @@ async function createLobbyListeners(data) {
             // TODO: make this not default behavior but instead activate on !startnow command
             // since both players already joined the lobby, we can 
             await lobby.abortTimer();
-            interrupt = true;
+            interruptStartTimeout();
 
             await channel.sendMessage(fetchmsg.fetchMessage("roll_start"));
             
