@@ -11,7 +11,7 @@ const rollSystems = require('./consts/rollSystems');
 
 const client = new Banchojs.BanchoClient(ircConfig);
 let channel, lobby;
-let currentTimeout; // TODO: not sure if this is the best way to do this
+let currentTimeout = {"tournament_match": ""}; // TODO: not sure if this is the best way to do this
 
 function reorderData(config) {
     const newData = JSON.parse(JSON.stringify(config));
@@ -115,20 +115,39 @@ async function setupMatch(data) {
 
     await lobby.startTimer(15 * 60);
 
-    // TODO: Send a message 5 mins before match, but only do it if both players havent joined the lobby yet
+    // Send messages before match, but only do it if both players havent joined the lobby yet
 
-    startTimeout(function () {}, 90);
+    startTimeout(function () {
+        // send 5_mins_before_match after 10 minutes has elapsed
+        await p.sendMessage(fetchmsg.fetchMessage("5_mins_before_match").replace("<tournament_initials>", data.required.tournament_initials)
+                                                                        .replace("<player_name>", data.required.teams.team_1.team_name));
+        startTimeout(function () {
+            await p.sendMessage(fetchmsg.fetchMessage("match_now").replace("<tournament_initials>", data.required.tournament_initials)
+                                                                  .replace("<player_name>", data.required.teams.team_1.team_name));
+            // send match_now after 5 minutes has elapsed
+            startTimeout(function () {
+                // send 5_mins_over after 5 minutes has elapsed
+                await p.sendMessage(fetchmsg.fetchMessage("5_mins_over").replace("<tournament_initials>", data.required.tournament_initials)
+                                                                        .replace("<player_name>", data.required.teams.team_1.team_name));
+                startTimeout(function() {
+                    // send forfeit after 5 minutes has elapsed
+                    await p.sendMessage(fetchmsg.fetchMessage("forfeit").replace("<tournament_initials>", data.required.tournament_initials)
+                                                                        .replace("<player_name>", data.required.teams.team_1.team_name));
+                }, 60 * 5 * 1000);
+            }, 60 * 5 * 1000);
+        }, 60 * 5 * 1000);
+    }, 60 * 10 * 1000);
 
-    // TODO: Send a message with match time
- 
     await createLobbyListeners(data);
 }
 
+// func is function to run after seconds seconds
+// TODO: interrupt
 function startTimeout(func, seconds) {
     if (currentTimeout === null) {
 
     } else {
-
+        setTimeout(func, seconds)
     }
 }
 
@@ -157,8 +176,11 @@ async function createLobbyListeners(data) {
         if (team_1_players_in_lobby >= data.required.team_size && team_2_players_in_lobby >= data.required.team_size) {
             // both teams have enough players in lobby. the match can now start.
             channel.removeListener("playerJoined", this.eventListener);
+
+            // TODO: make this not default behavior but instead activate on !startnow command
+            // since both players already joined the lobby, we can 
             await lobby.abortTimer();
-            currentTimeout = null; // since both players already joined the lobby, we 
+            currentTimeout = null;
 
             await channel.sendMessage(fetchmsg.fetchMessage("roll_start"));
             
