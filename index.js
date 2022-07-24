@@ -1,6 +1,6 @@
 const Banchojs = require("bancho.js");
 
-const version = "0.2.5";
+const version = "0.2.6";
 const lobbySize = 16;
 
 const ircConfig = require('./irc_config.json');
@@ -11,6 +11,7 @@ const rollSystems = require('./consts/rollSystems');
 
 const client = new Banchojs.BanchoClient(ircConfig);
 let channel, lobby;
+let currentTimeout; // TODO: not sure if this is the best way to do this
 
 function reorderData(config) {
     const newData = JSON.parse(JSON.stringify(config));
@@ -114,11 +115,21 @@ async function setupMatch(data) {
 
     await lobby.startTimer(15 * 60);
 
-    // TODO: Send a message 5 mins before match
+    // TODO: Send a message 5 mins before match, but only do it if both players havent joined the lobby yet
+
+    startTimeout(function () {}, 90);
 
     // TODO: Send a message with match time
  
     await createLobbyListeners(data);
+}
+
+function startTimeout(func, seconds) {
+    if (currentTimeout === null) {
+
+    } else {
+
+    }
 }
 
 async function createLobbyListeners(data) {
@@ -145,8 +156,9 @@ async function createLobbyListeners(data) {
 
         if (team_1_players_in_lobby >= data.required.team_size && team_2_players_in_lobby >= data.required.team_size) {
             // both teams have enough players in lobby. the match can now start.
-            channel.removeListener("playedJoined", this.eventListener);
+            channel.removeListener("playerJoined", this.eventListener);
             await lobby.abortTimer();
+            currentTimeout = null; // since both players already joined the lobby, we 
 
             await channel.sendMessage(fetchmsg.fetchMessage("roll_start"));
             
