@@ -96,6 +96,8 @@ async function setupMatch(data) {
     
     // Inviting all players from team 1 and team 2
 
+    // TODO: handle case of rejectedMessage
+
     for (const p of team_1_players) {
         await p.sendMessage(fetchmsg.fetchMessage("welcome").replace("<version>", CONSTANTS.VERSION));
         await p.sendMessage(fetchmsg.fetchMessage("15_mins_before_match").replace("<tournament_initials>", data.required.tournament_initials)
@@ -143,10 +145,10 @@ async function setupMatch(data) {
                                                                             .replace("<player_name>", data.required.teams.team_1.team_name)
                                                                             .repeat("<forfeit_time>", data.forfeit_time / 60));
                     }
-                }, 60 * 5 * 100, dest);
-            }, 60 * 5 * 100, dest);
-        }, 60 * 5 * 100, dest);
-    }, 60 * 5 * 100, team_1_players.concat(team_2_players));
+                }, CONSTANTS.FIVE_MINS_MS, dest);
+            }, CONSTANTS.FIVE_MINS_MS, dest);
+        }, CONSTANTS.FIVE_MINS_MS, dest);
+    }, CONSTANTS.TEN_MINS_MS, team_1_players.concat(team_2_players));
 
     await createLobbyListeners(data);
 }
@@ -188,9 +190,9 @@ async function createLobbyListeners(data) {
         if (team_1_players_in_lobby >= data.required.team_size && team_2_players_in_lobby >= data.required.team_size) {
             // both teams have enough players in lobby. the match can now start.
             channel.removeListener("playerJoined", this.eventListener);
-
+            
+            // since both players already joined the lobby, we can start directly
             // TODO: make this not default behavior but instead activate on !startnow command
-            // since both players already joined the lobby, we can 
             await lobby.abortTimer();
             interruptStartTimeout();
 
@@ -203,8 +205,6 @@ async function createLobbyListeners(data) {
 
 async function rollPhase(data) {
     await channel.sendMessage(fetchmsg.fetchMessage("roll_start"));
-
-    data.required
 
     let rollVerification = {};
     let rolls = {};
@@ -234,11 +234,11 @@ async function rollPhase(data) {
 
         if (determineTeam(roll.groups.user, data.required.teams) === data.required.teams.team_1.team_name 
             && rolls[data.required.teams.team_1.team_name] !== -1) {
-            rolls[data.required.teams.team_1.team_name] = roll;
+            rolls[data.required.teams.team_1.team_name] = parseInt(roll.groups.roll);
         }
         if (determineTeam(roll.groups.user, data.required.teams) === data.required.teams.team_2.team_name
         && rolls[data.required.teams.team_2.team_name] !== -1) {
-            rolls[data.required.teams.team_2.team_name] = roll;
+            rolls[data.required.teams.team_2.team_name] = parseInt(roll.groups.roll);
         }
 
         // TODO: handle ties between rolls
@@ -256,9 +256,10 @@ async function rollPhase(data) {
             const rollLoser = rollWinner === data.required.teams.team_1.team_name ? data.required.teams.team_2.team_name
                                                                                   : data.required.teams.team_1.team_name;
 
-            await channel.sendMessage(fetchmsg.fetchMessage("roll_winner_sequence").replace("<player_name>", rollWinner));
+            console.log(rollWinner);
+            console.log(rollLoser);
             
-            await processRollsPhase(rollWinner, rollLoser, data);
+            await determineBanPickSequencePhase(rollWinner, rollLoser, data);
         } 
     });
 }

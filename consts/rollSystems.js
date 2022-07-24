@@ -85,10 +85,10 @@ async function processRollSystems(rollWinner, rollLoser, data, channel, determin
 
     // for now we use UKCC roll system:
     if (rollSystem === "ukcc") {
-        const banPickSequence = await ukcc(rollLoser, rollLoser, data, channel, determineTeam);
+        return await ukcc(rollLoser, rollLoser, data, channel, determineTeam);
 
-        return [banPickSequence[0].pick === "first" ? data.required.teams.team_1.team_name : data.required.teams.team_2.team_name,
-                banPickSequence[0].ban === "first" ? data.required.teams.team_1.team_name : data.required.teams.team_2.team_name]
+        // return [banPickSequence[0].pick === "first" ? data.required.teams.team_1.team_name : data.required.teams.team_2.team_name,
+        //         banPickSequence[0].ban === "first" ? data.required.teams.team_1.team_name : data.required.teams.team_2.team_name]
     }
 }
 
