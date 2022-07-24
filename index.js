@@ -4,7 +4,7 @@ const version = "0.2.6";
 const lobbySize = 16;
 
 const ircConfig = require('./irc_config.json');
-const tournamentConfig = require('./tournament_config.json')
+const tournamentConfig = require('./tournament_config.json');
 
 const fetchmsg = require('./consts/messages');
 const rollSystems = require('./consts/rollSystems');
@@ -107,7 +107,7 @@ async function setupMatch(data) {
     }
 
     for (const p of team_2_players) {
-        await p.sendMessage(fetchmsg.fetchMessage("welcome").replace("<version", version));
+        await p.sendMessage(fetchmsg.fetchMessage("welcome").replace("<version>", version));
         await p.sendMessage(fetchmsg.fetchMessage("15_mins_before_match").replace("<tournament_initials>", data.required.tournament_initials)
                                                                      .replace("<player_name>", data.required.teams.team_1.team_name));
         await lobby.invitePlayer(p.ircUsername);
@@ -117,38 +117,50 @@ async function setupMatch(data) {
 
     // Send messages before match, but only do it if both players havent joined the lobby yet
 
-    startTimeout(function () {
+    startTimeout(async function (dest) {
         // send 5_mins_before_match after 10 minutes has elapsed
-        await p.sendMessage(fetchmsg.fetchMessage("5_mins_before_match").replace("<tournament_initials>", data.required.tournament_initials)
-                                                                        .replace("<player_name>", data.required.teams.team_1.team_name));
-        startTimeout(function () {
-            await p.sendMessage(fetchmsg.fetchMessage("match_now").replace("<tournament_initials>", data.required.tournament_initials)
-                                                                  .replace("<player_name>", data.required.teams.team_1.team_name));
+        for (const p of dest) {
+            console.log("reached 1");
+            await p.sendMessage(fetchmsg.fetchMessage("5_mins_before_match").replace("<tournament_initials>", data.required.tournament_initials)
+                                                                            .replace("<player_name>", data.required.teams.team_1.team_name));
+        }
+
+        startTimeout(async function (dest) {
             // send match_now after 5 minutes has elapsed
-            startTimeout(function () {
+            for (const p of dest) {
+                console.log("reached 2");
+                await p.sendMessage(fetchmsg.fetchMessage("match_now").replace("<tournament_initials>", data.required.tournament_initials)
+                                                                      .replace("<player_name>", data.required.teams.team_1.team_name));
+            }
+
+            startTimeout(async function (dest) {
                 // send 5_mins_over after 5 minutes has elapsed
-                await p.sendMessage(fetchmsg.fetchMessage("5_mins_over").replace("<tournament_initials>", data.required.tournament_initials)
-                                                                        .replace("<player_name>", data.required.teams.team_1.team_name));
-                startTimeout(function() {
+                for (const p of dest) {
+                    console.log("reached 3");
+                    await p.sendMessage(fetchmsg.fetchMessage("5_mins_over").replace("<tournament_initials>", data.required.tournament_initials)
+                                                                            .replace("<player_name>", data.required.teams.team_1.team_name));
+                }
+
+                startTimeout(async function(dest) {
                     // send forfeit after 5 minutes has elapsed
-                    await p.sendMessage(fetchmsg.fetchMessage("forfeit").replace("<tournament_initials>", data.required.tournament_initials)
-                                                                        .replace("<player_name>", data.required.teams.team_1.team_name));
-                }, 60 * 5 * 1000);
-            }, 60 * 5 * 1000);
-        }, 60 * 5 * 1000);
-    }, 60 * 10 * 1000);
+                    for (const p of dest) {
+                        console.log("reached 4");
+                        await p.sendMessage(fetchmsg.fetchMessage("forfeit").replace("<tournament_initials>", data.required.tournament_initials)
+                                                                            .replace("<player_name>", data.required.teams.team_1.team_name)
+                                                                            .repeat("<forfeit_time>", data.forfeit_time / 60));
+                    }
+                }, 60 * 5 * 100, dest);
+            }, 60 * 5 * 100, dest);
+        }, 60 * 5 * 100, dest);
+    }, 60 * 5 * 100, team_1_players.concat(team_2_players), true);
 
     await createLobbyListeners(data);
 }
 
 // func is function to run after seconds seconds
 // TODO: interrupt
-function startTimeout(func, seconds) {
-    if (currentTimeout === null) {
-
-    } else {
-        setTimeout(func, seconds)
-    }
+async function startTimeout(func, seconds, dest, interrupt) {
+    if (!interrupt) setTimeout(func, seconds, dest, interrupt);
 }
 
 async function createLobbyListeners(data) {
@@ -204,7 +216,7 @@ async function rollPhase(data) {
         // thanks @clxxiii for this piece of code
 
         const content = msg.message;
-        const sender = message.user;
+        const sender = msg.user;
 
         if (content.toLowerCase() === "!roll") {
             rollVerification[sender.ircUsername] = true;

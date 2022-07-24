@@ -1,4 +1,4 @@
-const fetchmsg = require('./consts/messages');
+const fetchmsg = require('../consts/messages');
 
 function storeBans(content, active, passive) {
     if (content.toLowerCase() === "pick first") {
