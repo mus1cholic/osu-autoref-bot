@@ -160,6 +160,8 @@ async function setupMatch(data) {
         }, CONSTANTS.FIVE_MINS_MS, dest);
     }, CONSTANTS.TEN_MINS_MS, team_1_players.concat(team_2_players));
 
+    // TODO: fix an issue where if both player joins before this is called,
+    // the match does not automatically start
     await createLobbyListeners(data);
 }
 
@@ -174,7 +176,6 @@ async function interruptStartTimeout() {
     clearTimeout(currentTimeout);
     currentTimeout = null;
 }
-
 async function createLobbyListeners(data) {
     // the lobby can only be "full" if the last action is a player joining, so we don't
     // need any other lobby listeners like playerLeft
@@ -503,7 +504,7 @@ async function pickPhase(firstToPick, maps, data) {
     
             currentMapPlayed = false;
     
-            await lobby.startTimer(data.optional.map_wait_time + oneMin);
+            await lobby.startTimer(data.optional.map_wait_time + CONSTANTS.ONE_MIN);
         } else {
             await channel.sendMessage(fetchmsg.fetchMessage("score").replace("<team_1_name>", data.required.teams.team_1.team_name)
                                               .replace("<team_1_score>", match_score[0])
@@ -580,10 +581,11 @@ async function createLobbyCommandsListeners() {
         // ignore any messages by the bot or banchobot
         if (message.self || sender.ircUsername === "BanchoBot") return;
 
-        if (content.startsWith(CONSANTS.COMMAND_PREFIX)) {
+        if (content.startsWith(CONSTANTS.COMMAND_PREFIX)) {
             const msg = content.substring(CONSTANTS.COMMAND_PREFIX.length).split(' ');
 
             // TODO: make this more elegant?
+            // TODO: this doesn't work if command prefix is not "!"
             if (msg[0] === "mp" && msg[1] === "close") {
                 await close();
             }
