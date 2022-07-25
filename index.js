@@ -1,5 +1,7 @@
 const Banchojs = require("bancho.js");
 
+// import { EventEmitter } from 'node:events';
+
 const CONSTANTS = require('./consts/consts');
 const fetchmsg = require('./consts/messages');
 const rollSystems = require('./consts/rollSystems');
@@ -11,6 +13,9 @@ const client = new Banchojs.BanchoClient(ircConfig);
 let channel, lobby;
 
 let currentTimeout; // match phases are linear so we don't need to initialize as array
+
+// class MyEmitter extends EventEmitter {}
+// const myEmitter = new MyEmitter();
 
 function reorderData(config) {
     const newData = JSON.parse(JSON.stringify(config));
@@ -97,6 +102,7 @@ async function setupMatch(data) {
     // Inviting all players from team 1 and team 2
 
     // TODO: handle case of rejectedMessage
+    // TODO: handle case of player offline
 
     for (const p of team_1_players) {
         await p.sendMessage(fetchmsg.fetchMessage("welcome").replace("<version>", CONSTANTS.VERSION));
@@ -265,12 +271,22 @@ async function rollPhase(data) {
 }
 
 async function determineBanPickSequencePhase(rollWinner, rollLoser, data) {
-    const banPickFirst = rollSystems.processRollSystems(rollWinner, rollLoser, data, channel, determineTeam);
+    // set up an internal event listener to call functions within listeners between files
 
-    await banPhase(banPickFirst[0], banPickFirst[1], data);   
+    const myEmitter = rollSystems.returnEmitter();
+
+    myEmitter.on('determinedBanPickSequence', (sequence) => {
+        console.log("you can't stop me!");
+        console.log(sequence);
+        await banPhase(sequence.banFirst, sequence.pickFirst, data);  
+    });
+
+    rollSystems.processRollSystems(rollWinner, rollLoser, data, channel, determineTeam, myEmitter);
 }
 
 async function banPhase(firstToBan, firstToPick, data) {
+    console.log("you really can't stop me!");
+
     let banTeam = firstToBan
     let banTurn = 1;
     let team_1_bans = [];

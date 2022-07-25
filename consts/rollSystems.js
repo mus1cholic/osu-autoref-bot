@@ -1,4 +1,9 @@
+import { EventEmitter } from 'node:events';
+
 const fetchmsg = require('../consts/messages');
+
+class MyEmitter extends EventEmitter {}
+const myEmitter = new MyEmitter();
 
 function storeBans(content, active, passive) {
     if (content.toLowerCase() === "pick first") {
@@ -73,7 +78,15 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam) {
 
         // if end
         if (choices.length === 0) {
+            const sequence = {
+                "pickFirst": "",
+                "banFirst": ""
+            };
 
+            sequence.pickFirst = team_choices.rollWinner.pick === "first" ? rollWinner : rollLoser;
+            sequence.banFirst = team_choices.rollWinner.ban === "first" ? rollWinner : rollLoser;
+
+            myEmitter.emit('determinedBanPickSequence', sequence);
         } else {
             currentTurn = currentTurn === rollWinner ? rollLoser : rollWinner;
         }
@@ -85,13 +98,15 @@ async function processRollSystems(rollWinner, rollLoser, data, channel, determin
 
     // for now we use UKCC roll system:
     if (rollSystem === "ukcc") {
-        return await ukcc(rollLoser, rollLoser, data, channel, determineTeam);
-
-        // return [banPickSequence[0].pick === "first" ? data.required.teams.team_1.team_name : data.required.teams.team_2.team_name,
-        //         banPickSequence[0].ban === "first" ? data.required.teams.team_1.team_name : data.required.teams.team_2.team_name]
+        await ukcc(rollLoser, rollLoser, data, channel, determineTeam);
     }
 }
 
+function returnEmitter() {
+    return myEmitter;
+}
+
 module.exports = {
-    processRollSystems
+    processRollSystems,
+    returnEmitter
 };
