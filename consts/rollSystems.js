@@ -89,7 +89,7 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitt
         } else {
             currentTurn = currentTurn === rollWinner ? rollLoser : rollWinner;
 
-            await channel.sendMessage(fetchmsg.fetchMessage("roll_loser_sequence").replace("<player_name>", rollWinner)
+            await channel.sendMessage(fetchmsg.fetchMessage("roll_loser_sequence").replace("<player_name>", rollLoser)
                                               .replace("<sequence>", helpers.printStringArray(choices)));
         }
     });

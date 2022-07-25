@@ -213,8 +213,6 @@ async function createLobbyListeners(data) {
 }
 
 async function rollPhase(data) {
-    await channel.sendMessage(fetchmsg.fetchMessage("roll_start"));
-
     let rollVerification = {};
     let rolls = {};
 
@@ -224,6 +222,8 @@ async function rollPhase(data) {
     // TODO: ensure a roll of greater than 100 does not count
     channel.on("message", this.eventListener = async (msg) => {
         // thanks @clxxiii for this piece of code
+
+        console.log(rolls);
 
         const content = msg.message;
         const sender = msg.user;
@@ -240,11 +240,11 @@ async function rollPhase(data) {
         rollVerification[sender.ircUsername] = null;
 
         if (determineTeam(roll.groups.user, data.required.teams) === data.required.teams.team_1.team_name 
-            && rolls[data.required.teams.team_1.team_name] !== -1) {
+            && rolls[data.required.teams.team_1.team_name] === -1) {
             rolls[data.required.teams.team_1.team_name] = parseInt(roll.groups.roll);
         }
         if (determineTeam(roll.groups.user, data.required.teams) === data.required.teams.team_2.team_name
-        && rolls[data.required.teams.team_2.team_name] !== -1) {
+        && rolls[data.required.teams.team_2.team_name] === 0) {
             rolls[data.required.teams.team_2.team_name] = parseInt(roll.groups.roll);
         }
 
@@ -252,7 +252,7 @@ async function rollPhase(data) {
 
         // now we check whether both players have rolled, if so roll phase is over and we can start banning phase
 
-        if (rolls[data.required.teams.team_1.team_name] !== -1 && rolls[data.required.teams.team_2.team_name] !== -1) {
+        if (rolls[data.required.teams.team_1.team_name] !== -1 && rolls[data.required.teams.team_2.team_name] !== 0) {
             channel.removeListener("message", this.eventListener);
 
             const rollWinner = rolls[data.required.teams.team_1.team_name] > rolls[data.required.teams.team_2.team_name]
@@ -272,6 +272,8 @@ async function determineBanPickSequencePhase(rollWinner, rollLoser, data) {
     myEmitter.once('determinedBanPickSequence', this.eventListener = async (sequence) => {
         myEmitter.removeListener("determinedBanPickSequence", this.eventListener);
 
+        console.log(sequence);
+
         await banPhase(sequence.banFirst, sequence.pickFirst, data);  
     });
 
@@ -284,6 +286,8 @@ async function banPhase(firstToBan, firstToPick, data) {
     let team_1_bans = [];
     let team_2_bans = [];
     let available_bans = Object.keys(data.required.pool);
+
+    console.log(banTeam);
 
     available_bans.splice(available_bans.indexOf("tb"), 1);
 
@@ -344,6 +348,7 @@ async function banPhase(firstToBan, firstToPick, data) {
 
             banTurn += 1;
             banTeam = banTeam === data.required.teams.team_1.team_name ? data.required.teams.team_2.team_name : data.required.teams.team_1.team_name;
+
             await channel.sendMessage(fetchmsg.fetchMessage("ban_start").replace("<player_name>", banTeam)
                                               .replace("<ban_total>", fetchmsg.fetchMessage("" + Math.ceil(banTurn / 2)))
                                               .replace("<maps_available>", helpers.printStringArray(available_bans))
@@ -365,7 +370,7 @@ async function pickPhase(firstToPick, maps, data) {
     let match_score = [0, 0];
     let available_picks = maps;
 
-    await channel.sendMessage(fetchmsg.fetchMessage("match_start".replace("<best_of>", data.required.bo)));
+    await channel.sendMessage(fetchmsg.fetchMessage("match_start").replace("<best_of>", data.required.bo));
     await channel.sendMessage(fetchmsg.fetchMessage("pick_start").replace("<player_name>", firstToPick)
                                                                  .replace("<maps_available>", helpers.printStringArray(available_picks))
                                                                  .replace("<pick_time>", data.optional.ban_pick_time));
@@ -382,6 +387,12 @@ async function pickPhase(firstToPick, maps, data) {
 
         // make sure the bot doesn't take its own response as well as banchobot as a map pick
         if (message.self || sender.ircUsername === "BanchoBot") return;
+
+        // TODO: make sure if people are chatting in the lobbies, it doesn't get recognized as an invalid pick
+        // we do this by checking if the message starts with one of the codes contained in the 
+        if (message.self) {
+            return;
+        }
 
         // make sure the right team picks
         if (pickTeam !== determineTeam(sender.ircUsername, data.required.teams)) {
@@ -467,7 +478,7 @@ async function pickPhase(firstToPick, maps, data) {
 
             await channel.sendMessage(fetchmsg.fetchMessage("ending").replace("<version>", CONSTANTS.VERSION));
 
-            setTimeout(function() {
+            setTimeout(async function() {
                 await lobby.closeLobby();
                 await close();
             }, CONSTANTS.ONE_MIN_MS);
@@ -503,7 +514,7 @@ async function pickPhase(firstToPick, maps, data) {
             pickTeam = pickTeam === data.required.teams.team_1.team_name ? data.required.teams.team_2.team_name
                                                                          : data.required.teams.team_1.team_name;
 
-            await channel.sendMessage(fetchmsg.fetchMessage("pick_start").replace("<player_name>", firstToPick)
+            await channel.sendMessage(fetchmsg.fetchMessage("pick_start").replace("<player_name>", pickTeam)
                                               .replace("<maps_available>", helpers.printStringArray(available_picks))
                                               .replace("<pick_time>", data.optional.ban_pick_time));
     
@@ -537,6 +548,8 @@ async function createPMListeners() {
                         if (lobby === null) {
                             await sender.sendMessage(fetchmsg.fetchMessage("no_pending_matches"));
                         }
+
+                        console.log('someone requested an invite');
     
                         await sender.sendMessage(fetchmsg.fetchMessage(CONSTANTS.COMMAND_PREFIX + "invite"));
                         await lobby.invitePlayer(sender.ircUsername);

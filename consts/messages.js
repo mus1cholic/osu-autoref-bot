@@ -1,4 +1,4 @@
-const CONSTANTS = require('./consts/consts');
+const CONSTANTS = require('./consts');
 
 module.exports = {
     fetchMessage: function (message_id) {
@@ -61,7 +61,7 @@ module.exports = {
                 return "The match will now start. This match is a best of <best_of>."
             case "pick_start":
                 return "<player_name>, it is your turn to pick. Valid picks are are <maps_available>. You have <pick_time> seconds."
-            case "poick_wrong_player":
+            case "pick_wrong_player":
                 return "<player_name>, it is not your turn to pick yet!"
             case "pick_wrong_id":
                 return "<player_name>, you have entered a wrong map pick. Valid picks are <maps_available>."
