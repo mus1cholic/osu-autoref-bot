@@ -1,10 +1,10 @@
 const Banchojs = require("bancho.js");
 
-// import { EventEmitter } from 'node:events';
+const ee = require("node:events");
 
 const CONSTANTS = require('./consts/consts');
+const helpers = require('./consts/helpers');
 const fetchmsg = require('./consts/messages');
-const helpers = require('../consts/helpers');
 
 const rollSystems = require('./consts/rollSystems');
 
@@ -16,8 +16,8 @@ let channel, lobby;
 
 let currentTimeout; // match phases are linear so we don't need to initialize as array
 
-// class MyEmitter extends EventEmitter {}
-// const myEmitter = new MyEmitter();
+class MyEmitter extends ee.EventEmitter {}
+const myEmitter = new MyEmitter();
 
 function reorderData(config) {
     const newData = JSON.parse(JSON.stringify(config));
@@ -235,10 +235,7 @@ async function rollPhase(data) {
     
         const roll = content.match(/(?<user>.+) rolls (?<roll>\d+) point\(s\)/);  
         if (!roll) return;
-        console.log(rollVerification);
         rollVerification[sender.ircUsername] = null;
-    
-        console.log(roll.groups);
 
         if (determineTeam(roll.groups.user, data.required.teams) === data.required.teams.team_1.team_name 
             && rolls[data.required.teams.team_1.team_name] !== -1) {
@@ -251,8 +248,6 @@ async function rollPhase(data) {
 
         // TODO: handle ties between rolls
 
-        console.log(rolls);
-
         // now we check whether both players have rolled, if so roll phase is over and we can start banning phase
 
         if (rolls[data.required.teams.team_1.team_name] !== -1 && rolls[data.required.teams.team_2.team_name] !== -1) {
@@ -263,9 +258,6 @@ async function rollPhase(data) {
                                                                            : data.required.teams.team_2.team_name;
             const rollLoser = rollWinner === data.required.teams.team_1.team_name ? data.required.teams.team_2.team_name
                                                                                   : data.required.teams.team_1.team_name;
-
-            console.log(rollWinner);
-            console.log(rollLoser);
             
             await determineBanPickSequencePhase(rollWinner, rollLoser, data);
         } 
@@ -275,13 +267,11 @@ async function rollPhase(data) {
 async function determineBanPickSequencePhase(rollWinner, rollLoser, data) {
     // set up an internal event listener to call functions within listeners between files
 
-    const myEmitter = rollSystems.returnEmitter();
-
     myEmitter.on('determinedBanPickSequence', async (sequence) => {
         await banPhase(sequence.banFirst, sequence.pickFirst, data);  
     });
 
-    rollSystems.processRollSystems(rollWinner, rollLoser, data, channel, determineTeam);
+    rollSystems.processRollSystems(rollWinner, rollLoser, data, channel, determineTeam, myEmitter);
 }
 
 async function banPhase(firstToBan, firstToPick, data) {

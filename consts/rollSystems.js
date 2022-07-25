@@ -1,11 +1,5 @@
-// import { EventEmitter } from 'node:events';
-const ee = require("node:events");
-
-const fetchmsg = require('../consts/messages');
 const helpers = require('../consts/helpers');
-
-class MyEmitter extends ee.EventEmitter {}
-const myEmitter = new MyEmitter();
+const fetchmsg = require('../consts/messages');
 
 function storeBans(content, active, passive) {
     if (content.toLowerCase() === "pick first") {
@@ -24,7 +18,7 @@ function storeBans(content, active, passive) {
 }
 
 // TODO: make this a class and make every system an instance?
-async function ukcc(rollWinner, rollLoser, data, channel, determineTeam) {
+async function ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitter) {
     let teamChoices = {
         rollWinner: {
             "pick": "",
@@ -36,7 +30,7 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam) {
         }
     };
 
-    let choices = ["Pick first", "pick second", "ban first", "ban second"];
+    let choices = ["pick first", "pick second", "ban first", "ban second"];
     
     let currentTurn = rollWinner;
 
@@ -98,20 +92,15 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam) {
     });
 }
 
-async function processRollSystems(rollWinner, rollLoser, data, channel, determineTeam) {
+async function processRollSystems(rollWinner, rollLoser, data, channel, determineTeam, myEmitter) {
     const rollSystem = data.optional.roll_system
 
     // for now we use UKCC roll system:
     if (rollSystem === "ukcc") {
-        await ukcc(rollWinner, rollLoser, data, channel, determineTeam);
+        await ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitter);
     }
 }
 
-function returnEmitter() {
-    return myEmitter;
-}
-
 module.exports = {
-    processRollSystems,
-    returnEmitter
+    processRollSystems
 };
