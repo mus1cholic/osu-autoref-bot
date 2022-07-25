@@ -78,7 +78,7 @@ module.exports = {
             case "tiebreaker":
                 return "It's time for tiebreaker!"
             case "match_finished":
-                return "Current score: <team_1_name> <team_1_score> - <team_2_score> <team_1_name>. Congratulations to <winner_name>, you have won the match. Good game to both players! Feel free to leave the lobby."
+                return "Current score: <team_1_name> <team_1_score> - <team_2_score> <team_2_name>. Congratulations to <winner_name>, you have won the match. Good game to both players! Please feel free to leave the lobby."
             case "ending":
                 return `Thank you for using AutoRef v<version>. If you have any concerns or feedback, please fill out our form <here>. We hope you have a good rest of the day!`
             case "default":

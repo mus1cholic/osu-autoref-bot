@@ -255,6 +255,8 @@ async function rollPhase(data) {
         if (rolls[data.required.teams.team_1.team_name] !== -1 && rolls[data.required.teams.team_2.team_name] !== 0) {
             channel.removeListener("message", this.eventListener);
 
+            console.log(rolls);
+
             const rollWinner = rolls[data.required.teams.team_1.team_name] > rolls[data.required.teams.team_2.team_name]
                                                                            ? data.required.teams.team_1.team_name
                                                                            : data.required.teams.team_2.team_name;
@@ -286,8 +288,6 @@ async function banPhase(firstToBan, firstToPick, data) {
     let team_1_bans = [];
     let team_2_bans = [];
     let available_bans = Object.keys(data.required.pool);
-
-    console.log(banTeam);
 
     available_bans.splice(available_bans.indexOf("tb"), 1);
 
@@ -546,8 +546,6 @@ async function createPMListeners() {
                         if (lobby === null) {
                             await sender.sendMessage(fetchmsg.fetchMessage("no_pending_matches"));
                         }
-
-                        console.log('someone requested an invite');
     
                         await sender.sendMessage(fetchmsg.fetchMessage(CONSTANTS.COMMAND_PREFIX + "invite"));
                         await lobby.invitePlayer(sender.ircUsername);

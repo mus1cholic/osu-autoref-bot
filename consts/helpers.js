@@ -24,6 +24,14 @@ function determineMod(str, score_mode) {
     return Banchojs.BanchoMods.parseShortMods(prefix);
 }
 
+function checkPickBanSequenceKeywords() {
+
+}
+
+function checkPoolPickBanKeywords() {
+    
+}
+
 function checkSpecialKeyWords(str, keyWords) {
     for (const word of keyWords) {
         if (str.length >= word.length && str.substring(0, word.length) === word) return true;

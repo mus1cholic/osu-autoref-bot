@@ -5,9 +5,9 @@
         "team_size": "1",
         "teams": {
             "team_1": {
-                "team_name": "-Arko",
+                "team_name": "lolol234",
                 "player_ids": ["5791401"],
-                "player_names": ["-Arko"]
+                "player_names": ["lolol234"]
             },
             "team_2": {
                 "team_name": "lolol234",
@@ -60,7 +60,7 @@
             "tb": "315"
         },
         "date": "2022-07-22T09:00:00Z",
-        "bo": "5"
+        "bo": "3"
     },
 
     "optional": {

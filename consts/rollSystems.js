@@ -48,7 +48,7 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitt
         if (message.self || sender.ircUsername === "BanchoBot") return;
 
         // detect regular message, don't need to do anything
-        if (!helpers.checkSpecialKeyWords(CONSTANTS.PICK_BAN_KEYWORD)) return;
+        if (!helpers.checkSpecialKeyWords(content.toLowerCase(), CONSTANTS.PICK_BAN_KEYWORD)) return;
 
         // make sure the right team chooses
         if (currentTurn !== determineTeam(sender.ircUsername, data.required.teams)) {
