@@ -1,8 +1,10 @@
-import { EventEmitter } from 'node:events';
+// import { EventEmitter } from 'node:events';
+const ee = require("node:events");
 
 const fetchmsg = require('../consts/messages');
+const helpers = require('../consts/helpers');
 
-class MyEmitter extends EventEmitter {}
+class MyEmitter extends ee.EventEmitter {}
 const myEmitter = new MyEmitter();
 
 function storeBans(content, active, passive) {
@@ -23,7 +25,7 @@ function storeBans(content, active, passive) {
 
 // TODO: make this a class and make every system an instance?
 async function ukcc(rollWinner, rollLoser, data, channel, determineTeam) {
-    let team_choices = {
+    let teamChoices = {
         rollWinner: {
             "pick": "",
             "ban": ""
@@ -34,12 +36,12 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam) {
         }
     };
 
-    let choices = ["pick first", "pick second", "ban first", "ban second"];
+    let choices = ["Pick first", "pick second", "ban first", "ban second"];
     
     let currentTurn = rollWinner;
 
     await channel.sendMessage(fetchmsg.fetchMessage("roll_winner_sequence").replace("<player_name>", rollWinner)
-                                                                           .replace("<sequence>", choices.toString()));
+                                                                           .replace("<sequence>", helpers.printStringArray(choices)));
 
     // read in pick/ban order choice from user
     channel.on("message", this.eventListener = async (message) => {
@@ -58,7 +60,7 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam) {
         // make sure the choice is a valid choice
         if (!choices.includes(content.toLowerCase())) {
             await channel.sendMessage(fetchmsg.fetchMessage("roll_sequence_wrong_id").replace("<player_name>", sender.ircUsername)
-                                                            .replace("<sequence>", choices.toString())
+                                                            .replace("<sequence>", helpers.printStringArray(choices))
                                                             .replace("p", "P")
                                                             .replace("b", "B"));
             return;
@@ -83,12 +85,15 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam) {
                 "banFirst": ""
             };
 
-            sequence.pickFirst = team_choices.rollWinner.pick === "first" ? rollWinner : rollLoser;
-            sequence.banFirst = team_choices.rollWinner.ban === "first" ? rollWinner : rollLoser;
+            sequence.pickFirst = teamChoices.rollWinner.pick === "first" ? rollWinner : rollLoser;
+            sequence.banFirst = teamChoices.rollWinner.ban === "first" ? rollWinner : rollLoser;
 
             myEmitter.emit('determinedBanPickSequence', sequence);
         } else {
             currentTurn = currentTurn === rollWinner ? rollLoser : rollWinner;
+
+            await channel.sendMessage(fetchmsg.fetchMessage("roll_loser_sequence").replace("<player_name>", rollWinner)
+                                              .replace("<sequence>", helpers.printStringArray(choices)));
         }
     });
 }
@@ -98,7 +103,7 @@ async function processRollSystems(rollWinner, rollLoser, data, channel, determin
 
     // for now we use UKCC roll system:
     if (rollSystem === "ukcc") {
-        await ukcc(rollLoser, rollLoser, data, channel, determineTeam);
+        await ukcc(rollWinner, rollLoser, data, channel, determineTeam);
     }
 }
 

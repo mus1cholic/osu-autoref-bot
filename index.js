@@ -4,6 +4,8 @@ const Banchojs = require("bancho.js");
 
 const CONSTANTS = require('./consts/consts');
 const fetchmsg = require('./consts/messages');
+const helpers = require('../consts/helpers');
+
 const rollSystems = require('./consts/rollSystems');
 
 const ircConfig = require('./irc_config.json');
@@ -275,13 +277,11 @@ async function determineBanPickSequencePhase(rollWinner, rollLoser, data) {
 
     const myEmitter = rollSystems.returnEmitter();
 
-    myEmitter.on('determinedBanPickSequence', (sequence) => {
-        console.log("you can't stop me!");
-        console.log(sequence);
+    myEmitter.on('determinedBanPickSequence', async (sequence) => {
         await banPhase(sequence.banFirst, sequence.pickFirst, data);  
     });
 
-    rollSystems.processRollSystems(rollWinner, rollLoser, data, channel, determineTeam, myEmitter);
+    rollSystems.processRollSystems(rollWinner, rollLoser, data, channel, determineTeam);
 }
 
 async function banPhase(firstToBan, firstToPick, data) {
@@ -313,7 +313,7 @@ async function banPhase(firstToBan, firstToPick, data) {
         // TODO: case insensitive
         if (!available_bans.includes(content)) {
             await channel.sendMessage(fetchmsg.fetchMessage("ban_wrong_id").replace("<player_name>", sender.ircUsername)
-                                                            .replace("<maps_available>", available_bans.toString()));
+                                                            .replace("<maps_available>", helpers.printStringArray(available_bans)));
             return;
         }
 
@@ -346,13 +346,13 @@ async function banPhase(firstToBan, firstToPick, data) {
             banTeam = banTeam === data.required.teams.team_1.team_name ? data.required.teams.team_2.team_name : data.required.teams.team_1.team_name;
             await channel.sendMessage(fetchmsg.fetchMessage("ban_start").replace("<player_name>", banTeam)
                                                                .replace("<ban_total>", banTurn)
-                                                               .replace("<maps_available>", available_bans.toString())
+                                                               .replace("<maps_available>", helpers.printStringArray(available_bans))
                                                                .replace("<ban_time>", data.optional.ban_pick_time));
             await lobby.startTimer(parseInt(data.optional.ban_pick_time));
 
             // TODO: over-time and reserve time
         }
-    })
+    });
 }
 
 async function pickPhase(firstToPick, data) {
