@@ -27,6 +27,7 @@ function reorderData(config) {
     newData.optional.match_title = newData.optional.match_title.replace("<team_1_players>", newData.required.teams.team_1.team_name);
     newData.optional.match_title = newData.optional.match_title.replace("<team_2_players>", newData.required.teams.team_2.team_name);
 
+    console.log(newData.optional.score_mode);
     // setting up score mode
     if (newData.optional.score_mode === "v2") {
         newData.optional.score_mode = Banchojs.BanchoLobbyWinConditions.ScoreV2;
@@ -283,14 +284,17 @@ async function banPhase(firstToBan, firstToPick, data) {
     let team_2_bans = [];
     let available_bans = Object.keys(data.required.pool);
 
+    available_bans.splice(available_bans.indexOf("tb"), 1);
+
     await channel.sendMessage(fetchmsg.fetchMessage("ban_start").replace("<player_name>", firstToBan)
-                                                                .replace("<ban_total>", banTurn)
+                                                                .replace("<ban_total>", fetchmsg.fetchMessage("1"))
                                                                 .replace("<maps_available>", helpers.printStringArray(available_bans))
                                                                 .replace("<ban_time>", data.optional.ban_pick_time));
 
     await lobby.startTimer(data.optional.ban_pick_time);
 
     // read in the bans from each player
+    // TODO: do not allow to ban tb
     channel.on("message", this.eventListener = async (message) => {
         const content = message.message;
         const sender = message.user;
@@ -335,7 +339,7 @@ async function banPhase(firstToBan, firstToPick, data) {
             await pickPhase(firstToPick, data);
         } else {
             // change banTeam and increment banTurn
-            await lobby.abortTimer();
+            // await lobby.abortTimer(); // don't need this since we're setting a new timer immediately after
 
             banTurn += 1;
             banTeam = banTeam === data.required.teams.team_1.team_name ? data.required.teams.team_2.team_name : data.required.teams.team_1.team_name;
@@ -351,10 +355,9 @@ async function banPhase(firstToBan, firstToPick, data) {
 }
 
 async function pickPhase(firstToPick, data) {
-    console.log("YAY FINALLY PICKS");
-
     let pickTeam = firstToPick;
     let pickTurn = 1;
+    let temporaryStopRecievingMessage = false;
     let currentMapPlayed = false;
     let team_1_picks = [];
     let team_2_picks = [];
@@ -372,6 +375,9 @@ async function pickPhase(firstToPick, data) {
     channel.on("message", this.eventListener = async (message) => {
         const content = message.message;
         const sender = message.user;
+
+        // temporarily stop recieving inputs
+        if (temporaryStopRecievingMessage) return;
 
         // make sure the bot doesn't take its own response as well as banchobot as a map pick
         if (message.self || sender.ircUsername === "BanchoBot") return;
@@ -399,10 +405,15 @@ async function pickPhase(firstToPick, data) {
         available_picks.splice(available_picks.indexOf(content), 1);
 
         // TODO: FREEMOD DETECTION
-        lobby.setMap(data.required.pool.content);
+        lobby.setMap(data.required.pool[content]);
         lobby.setMods(helpers.determineMod(content, data.optional.score_mode));
 
         currentMapPlayed = false;
+        temporaryStopRecievingMessage = true;
+
+        delete available_picks[content];
+
+        await lobby.startTimer(data.optional.map_wait_time);
     });
 
     // detect if players are ready and the new map is chosen
@@ -411,10 +422,28 @@ async function pickPhase(firstToPick, data) {
     })
 
     // detect when the map is finished
-    lobby.on("matchFinished", this.eventListener = async (obj) => {
+    lobby.on("matchFinished", this.eventListener = async (playerScores) => {
+        console.log("no way we reach this right");
+
+        let team_1_scores = 0;
+        let team_2_scores = 0;
+
         currentMapPlayed = true;
 
-        console.log("no way we reach this right");
+        // TODO: calculate scores
+
+
+        await channel.sendMessage(fetchmsg.fetchMessage("score"));
+
+        temporaryStopRecievingMessage = false;
+
+        await channel.sendMessage(fetchmsg.fetchMessage("pick_start").replace("<player_name>", firstToPick)
+                                          .replace("<maps_available>", helpers.printStringArray(available_picks))
+                                          .replace("<pick_time>", data.optional.ban_pick_time));
+
+        await lobby.startTimer(data.optional.ban_pick_time);
+
+        console.log(available_picks);
     })
 }
 
