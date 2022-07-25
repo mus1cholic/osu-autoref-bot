@@ -57,6 +57,10 @@ module.exports = {
                 return "Bans have now concluded. <player_name> banned <map_bans> and <player_name> banned <map_bans>"
             case "pick_start":
                 return "<player_name>, it is your turn to pick. Valid picks are are <maps_available>. You have <pick_time> seconds."
+            case "poick_wrong_player":
+                return "<player_name>, it is not your turn to pick yet!"
+            case "pick_wrong_id":
+                return "<player_name>, you have entered a wrong map pick. Valid picks are <maps_available>."
             case "pick_30_seconds":
                 return "<player_name>, it is your turn to pick. Valid picks are are <maps_available>. You have 30 seconds left."
             case "pick_reserve":
@@ -91,6 +95,18 @@ module.exports = {
                 return "first"
             case "2":
                 return "second"
+            case "3":
+                return "third"
+            case "4":
+                return "fourth"
+            case "5":
+                return "fifth"
+            case "6":
+                return "sixth"
+            case "7":
+                return "seventh"
+            case "8":
+                return "eighth"
             default:
                 console.log("Unrecognized message id. No messages have been sent.");
                 return "Unrecognized message id. No messages have been sent.";

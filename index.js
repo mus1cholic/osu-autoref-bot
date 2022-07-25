@@ -322,7 +322,7 @@ async function banPhase(firstToBan, firstToPick, data) {
         // if this is the last ban, then we remove the listener, update data, and move onto pick phase
         if (banTurn === data.optional.bans * 2) {
             await lobby.abortTimer();
-            
+
             const available_maps = data.required.pool;
             for (const ban of team_1_bans) {
                 delete available_maps.ban;
@@ -352,6 +352,70 @@ async function banPhase(firstToBan, firstToPick, data) {
 
 async function pickPhase(firstToPick, data) {
     console.log("YAY FINALLY PICKS");
+
+    let pickTeam = firstToPick;
+    let pickTurn = 1;
+    let currentMapPlayed = false;
+    let team_1_picks = [];
+    let team_2_picks = [];
+    let available_picks = Object.keys(data.required.pool);
+
+    console.log(available_picks);
+
+    await channel.sendMessage(fetchmsg.fetchMessage("pick_start").replace("<player_name>", firstToPick)
+                                                                 .replace("<maps_available>", helpers.printStringArray(available_picks))
+                                                                 .replace("<pick_time>", data.optional.ban_pick_time));
+
+    await lobby.startTimer(data.optional.ban_pick_time);
+
+    // read in the picks from each player
+    channel.on("message", this.eventListener = async (message) => {
+        const content = message.message;
+        const sender = message.user;
+
+        // make sure the bot doesn't take its own response as well as banchobot as a map pick
+        if (message.self || sender.ircUsername === "BanchoBot") return;
+
+        // make sure the right team picks
+        if (pickTeam !== determineTeam(sender.ircUsername, data.required.teams)) {
+            await channel.sendMessage(fetchmsg.fetchMessage("pick_wrong_player").replace("<player_name>", sender.ircUsername));
+            return;
+        }
+
+        // make sure the pick is a valid pick
+        if (!available_picks.includes(content.toLowerCase())) {
+            await channel.sendMessage(fetchmsg.fetchMessage("pick_wrong_id").replace("<player_name>", sender.ircUsername)
+                                              .replace("<maps_available>", helpers.printStringArray(available_picks)));
+            return;
+        }
+
+        // the pick is valid and sent by the right team, we proceed
+        if (pickTeam === data.required.teams.team_1.team_name) {
+            team_1_picks.push(content);
+        } else {
+            team_2_picks.push(content);
+        }
+
+        available_picks.splice(available_picks.indexOf(content), 1);
+
+        // TODO: FREEMOD DETECTION
+        lobby.setMap(data.required.pool.content);
+        lobby.setMods(helpers.determineMod(content, data.optional.score_mode));
+
+        currentMapPlayed = false;
+    });
+
+    // detect if players are ready and the new map is chosen
+    lobby.on("allPlayersReady", this.eventListener = async (obj) => {
+        if (!currentMapPlayed) lobby.startMatch(CONSTANTS.TEN_SECS);
+    })
+
+    // detect when the map is finished
+    lobby.on("matchFinished", this.eventListener = async (obj) => {
+        currentMapPlayed = true;
+
+        console.log("no way we reach this right");
+    })
 }
 
 async function createPMListeners() {

@@ -1,3 +1,5 @@
+const Banchojs = require("bancho.js");
+
 function printStringArray(arr) {
     let ret = "";
     
@@ -13,6 +15,16 @@ function printStringArray(arr) {
     return ret;
 }
 
+function determineMod(str, score_mode) {
+    // TODO: FREEMOD DETECTION
+    let prefix = str.substring(0, 2).toUpperCase();
+
+    if (score_mode === Banchojs.BanchoLobbyWinConditions.ScoreV2) prefix += "NF";
+
+    return Banchojs.BanchoMods.parseShortMods(prefix);
+}
+
 module.exports = {
-    printStringArray
+    printStringArray,
+    determineMod
 };

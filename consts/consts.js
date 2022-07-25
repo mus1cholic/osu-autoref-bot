@@ -1,4 +1,4 @@
-const version = "0.3.0";
+const version = "0.3.1";
 const commandPrefix = "!";
 
 const lobbySize = 16;
@@ -11,6 +11,9 @@ const fiveMins = 60 * 5;
 const fiveMinsMs = 60 * 5 * 1000;
 const oneMin = 60 * 1;
 const oneMinMs = 60 * 1 * 1000;
+
+const tenSecs = 1 * 10;
+const tenSecsMs = 1 * 10 * 10000;
 
 module.exports = Object.freeze({
     VERSION: version,
@@ -25,5 +28,8 @@ module.exports = Object.freeze({
     FIVE_MINS: fiveMins,
     FIVE_MINS_MS: fiveMinsMs,
     ONE_MIN: oneMin,
-    ONE_MIN_MS: oneMinMs
+    ONE_MIN_MS: oneMinMs,
+
+    TEN_SECS: tenSecs,
+    TEN_SECS_MS: tenSecsMs
 });
