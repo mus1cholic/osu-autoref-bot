@@ -307,6 +307,12 @@ async function banPhase(firstToBan, firstToPick, data) {
         // make sure the bot doesn't take its own response as well as banchobot as a map ban
         if (message.self || sender.ircUsername === "BanchoBot") return;
 
+        // detect regular message, don't need to do anything
+        // TODO: make this cleaner
+        if (!content.toLowerCase().startsWith("nm") && !content.toLowerCase().startsWith("hd") &&
+            !content.toLowerCase().startsWith("hr") && !content.toLowerCase().startsWith("dt") &&
+            !content.toLowerCase().startsWith("fm")) return;
+
         // make sure the right team bans
         if (banTeam !== determineTeam(sender.ircUsername, data.required.teams)) {
             await channel.sendMessage(fetchmsg.fetchMessage("ban_wrong_player").replace("<player_name>", sender.ircUsername));
@@ -388,11 +394,11 @@ async function pickPhase(firstToPick, maps, data) {
         // make sure the bot doesn't take its own response as well as banchobot as a map pick
         if (message.self || sender.ircUsername === "BanchoBot") return;
 
-        // TODO: make sure if people are chatting in the lobbies, it doesn't get recognized as an invalid pick
-        // we do this by checking if the message starts with one of the codes contained in the 
-        if (message.self) {
-            return;
-        }
+        // detect regular message, don't need to do anything
+        // TODO: make this cleaner
+        if (!content.toLowerCase().startsWith("nm") && !content.toLowerCase().startsWith("hd") &&
+            !content.toLowerCase().startsWith("hr") && !content.toLowerCase().startsWith("dt") &&
+            !content.toLowerCase().startsWith("fm")) return;
 
         // make sure the right team picks
         if (pickTeam !== determineTeam(sender.ircUsername, data.required.teams)) {
@@ -527,8 +533,6 @@ async function createPMListeners() {
     client.on("PM", async (message) => {
         const content = message.message;
         const sender = message.user;
-        // console.log("message");
-        // console.log(message);
 
         if (message.self || sender.ircUsername === "BanchoBot" ||
             (!message.self && sender.ircUsername === message.recipient.ircUsername)) return; // TODO: perhaps bandaid fix?
@@ -565,9 +569,9 @@ async function createPMListeners() {
                         break;
                 }
             } else {
-                console.log("a problematic message has occurred. this should not be reached just yet. the message:");
-                console.log(content);
-                await sender.sendMessage(fetchmsg.fetchMessage("default"));
+                // console.log("a problematic message has occurred. this should not be reached just yet. the message:");
+                // console.log(content);
+                // await sender.sendMessage(fetchmsg.fetchMessage("default"));
             }
         }
     });

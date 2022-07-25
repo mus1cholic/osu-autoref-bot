@@ -46,6 +46,10 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitt
         // make sure the bot doesn't take its own response as well as banchobot as a choice
         if (message.self || sender.ircUsername === "BanchoBot") return;
 
+        // detect regular message, don't need to do anything
+        // TODO: make this more elegant
+        if (!content.toLowerCase().startsWith("pick") && !content.toLowerCase().startsWith("ban")) return;
+
         // make sure the right team chooses
         if (currentTurn !== determineTeam(sender.ircUsername, data.required.teams)) {
             await channel.sendMessage(fetchmsg.fetchMessage("roll_sequence_wrong_player").replace("<player_name>", sender.ircUsername));
