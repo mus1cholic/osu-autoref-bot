@@ -267,7 +267,9 @@ async function rollPhase(data) {
 async function determineBanPickSequencePhase(rollWinner, rollLoser, data) {
     // set up an internal event listener to call functions within listeners between files
 
-    myEmitter.on('determinedBanPickSequence', async (sequence) => {
+    myEmitter.once('determinedBanPickSequence', this.eventListener = async (sequence) => {
+        myEmitter.removeListener("determinedBanPickSequence", this.eventListener);
+
         await banPhase(sequence.banFirst, sequence.pickFirst, data);  
     });
 
@@ -275,15 +277,18 @@ async function determineBanPickSequencePhase(rollWinner, rollLoser, data) {
 }
 
 async function banPhase(firstToBan, firstToPick, data) {
-    console.log("you really can't stop me!");
-
     let banTeam = firstToBan
     let banTurn = 1;
     let team_1_bans = [];
     let team_2_bans = [];
     let available_bans = Object.keys(data.required.pool);
 
-    await channel.sendMessage(fetchmsg.fetchMessage("ban_start"));
+    await channel.sendMessage(fetchmsg.fetchMessage("ban_start").replace("<player_name>", firstToBan)
+                                                                .replace("<ban_total>", banTurn)
+                                                                .replace("<maps_available>", helpers.printStringArray(available_bans))
+                                                                .replace("<ban_time>", data.optional.ban_pick_time));
+
+    await lobby.startTimer(data.optional.ban_pick_time);
 
     // read in the bans from each player
     channel.on("message", this.eventListener = async (message) => {
@@ -300,10 +305,9 @@ async function banPhase(firstToBan, firstToPick, data) {
         }
 
         // make sure the ban is a valid ban
-        // TODO: case insensitive
-        if (!available_bans.includes(content)) {
+        if (!available_bans.includes(content.toLowerCase())) {
             await channel.sendMessage(fetchmsg.fetchMessage("ban_wrong_id").replace("<player_name>", sender.ircUsername)
-                                                            .replace("<maps_available>", helpers.printStringArray(available_bans)));
+                                              .replace("<maps_available>", helpers.printStringArray(available_bans)));
             return;
         }
 
@@ -316,28 +320,29 @@ async function banPhase(firstToBan, firstToPick, data) {
         available_bans.splice(available_bans.indexOf(content), 1);
 
         // if this is the last ban, then we remove the listener, update data, and move onto pick phase
-        if (banTeam !== firstToBan && banTurn === data.optional.bans) {
+        if (banTurn === data.optional.bans * 2) {
+            await lobby.abortTimer();
+            
             const available_maps = data.required.pool;
             for (const ban of team_1_bans) {
-                delete available_maps.required.pool.ban;
+                delete available_maps.ban;
             }
             for (const ban of team_2_bans) {
-                delete available_maps.required.pool.ban;
+                delete available_maps.ban;
             }
             data.required.pool = available_maps;
             channel.removeListener("message", this.eventListener);
             await pickPhase(firstToPick, data);
         } else {
-            // change banTeam and banTurn
+            // change banTeam and increment banTurn
             await lobby.abortTimer();
-            if (banTeam !== firstToBan) {
-                banTurn += 1;
-            }
+
+            banTurn += 1;
             banTeam = banTeam === data.required.teams.team_1.team_name ? data.required.teams.team_2.team_name : data.required.teams.team_1.team_name;
             await channel.sendMessage(fetchmsg.fetchMessage("ban_start").replace("<player_name>", banTeam)
-                                                               .replace("<ban_total>", banTurn)
-                                                               .replace("<maps_available>", helpers.printStringArray(available_bans))
-                                                               .replace("<ban_time>", data.optional.ban_pick_time));
+                                              .replace("<ban_total>", fetchmsg.fetchMessage("" + Math.ceil(banTurn / 2)))
+                                              .replace("<maps_available>", helpers.printStringArray(available_bans))
+                                              .replace("<ban_time>", data.optional.ban_pick_time));
             await lobby.startTimer(parseInt(data.optional.ban_pick_time));
 
             // TODO: over-time and reserve time
@@ -346,7 +351,7 @@ async function banPhase(firstToBan, firstToPick, data) {
 }
 
 async function pickPhase(firstToPick, data) {
-
+    console.log("YAY FINALLY PICKS");
 }
 
 async function createPMListeners() {

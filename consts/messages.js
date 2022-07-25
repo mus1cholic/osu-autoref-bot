@@ -87,6 +87,10 @@ module.exports = {
                 return "You have accepted the request. The match will now be starting. Please join the lobby. If you need an invite, please type !invite."
             case "accept_start_now_error":
                 return "Error: no one has sent you a startnow request yet."
+            case "1":
+                return "first"
+            case "2":
+                return "second"
             default:
                 console.log("Unrecognized message id. No messages have been sent.");
                 return "Unrecognized message id. No messages have been sent.";

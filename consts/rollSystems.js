@@ -34,6 +34,7 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitt
     
     let currentTurn = rollWinner;
 
+    // TODO: .replace("p", "P").replace("b", "B")
     await channel.sendMessage(fetchmsg.fetchMessage("roll_winner_sequence").replace("<player_name>", rollWinner)
                                                                            .replace("<sequence>", helpers.printStringArray(choices)));
 
@@ -83,6 +84,8 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitt
             sequence.banFirst = teamChoices.rollWinner.ban === "first" ? rollWinner : rollLoser;
 
             myEmitter.emit('determinedBanPickSequence', sequence);
+
+            channel.removeListener("message", this.eventListener);
         } else {
             currentTurn = currentTurn === rollWinner ? rollLoser : rollWinner;
 
