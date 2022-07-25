@@ -62,7 +62,7 @@ async function init() {
 
     console.log("Successfully connected to Bancho. Enabling PM listeners...");
 
-    createPMListeners();
+    createPMCommandsListeners();
 
     console.log("Parsing match data json...");
 
@@ -82,6 +82,8 @@ async function setupMatch(data) {
 
     channel = await client.createLobby(`${data.required.tournament_initials}: (${data.required.teams.team_1.team_name}) vs (${data.required.teams.team_2.team_name})`)
     lobby = channel.lobby;
+
+    createLobbyCommandsListeners();
 
     const password = Math.random().toString(36).substring(8);
     // await lobby.setPassword(password);
@@ -524,7 +526,7 @@ async function pickPhase(firstToPick, maps, data) {
     })
 }
 
-async function createPMListeners() {
+async function createPMCommandsListeners() {
     client.on("PM", async (message) => {
         const content = message.message;
         const sender = message.user;
@@ -536,7 +538,7 @@ async function createPMListeners() {
 
         if (!message.self) {
             if (content.startsWith(CONSTANTS.COMMAND_PREFIX)) { 
-                const msg = content.substring(1).split(' ');
+                const msg = content.substring(CONSTANTS.COMMAND_PREFIX.length).split(' ');
     
                 // TODO: move this to a different file for cleanliness
                 switch (msg[0]) {
@@ -567,6 +569,26 @@ async function createPMListeners() {
                 // await sender.sendMessage(fetchmsg.fetchMessage("default"));
             }
         }
+    });
+}
+
+async function createLobbyCommandsListeners() {
+    channel.on("message", async (message) => {
+        const content = message.message;
+        const sender = message.user;
+
+        // ignore any messages by the bot or banchobot
+        if (message.self || sender.ircUsername === "BanchoBot") return;
+
+        if (content.startsWith(CONSANTS.COMMAND_PREFIX)) {
+            const msg = content.substring(CONSTANTS.COMMAND_PREFIX.length).split(' ');
+
+            // TODO: make this more elegant?
+            if (msg[0] === "mp" && msg[1] === "close") {
+                await close();
+            }
+        }
+
     });
 }
 
