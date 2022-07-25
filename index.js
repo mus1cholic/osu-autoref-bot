@@ -308,10 +308,7 @@ async function banPhase(firstToBan, firstToPick, data) {
         if (message.self || sender.ircUsername === "BanchoBot") return;
 
         // detect regular message, don't need to do anything
-        // TODO: make this cleaner
-        if (!content.toLowerCase().startsWith("nm") && !content.toLowerCase().startsWith("hd") &&
-            !content.toLowerCase().startsWith("hr") && !content.toLowerCase().startsWith("dt") &&
-            !content.toLowerCase().startsWith("fm")) return;
+        if (!helpers.checkSpecialKeyWords(content.toLowerCase(), CONSTANTS.POOL_KEYWORD)) return;
 
         // make sure the right team bans
         if (banTeam !== determineTeam(sender.ircUsername, data.required.teams)) {
@@ -395,10 +392,7 @@ async function pickPhase(firstToPick, maps, data) {
         if (message.self || sender.ircUsername === "BanchoBot") return;
 
         // detect regular message, don't need to do anything
-        // TODO: make this cleaner
-        if (!content.toLowerCase().startsWith("nm") && !content.toLowerCase().startsWith("hd") &&
-            !content.toLowerCase().startsWith("hr") && !content.toLowerCase().startsWith("dt") &&
-            !content.toLowerCase().startsWith("fm")) return;
+        if (!helpers.checkSpecialKeyWords(content.toLowerCase(), CONSTANTS.POOL_KEYWORD)) return;
 
         // make sure the right team picks
         if (pickTeam !== determineTeam(sender.ircUsername, data.required.teams)) {

@@ -1,3 +1,4 @@
+const CONSTANTS = require('../consts/consts');
 const helpers = require('../consts/helpers');
 const fetchmsg = require('../consts/messages');
 
@@ -47,8 +48,7 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitt
         if (message.self || sender.ircUsername === "BanchoBot") return;
 
         // detect regular message, don't need to do anything
-        // TODO: make this more elegant
-        if (!content.toLowerCase().startsWith("pick") && !content.toLowerCase().startsWith("ban")) return;
+        if (!helpers.checkSpecialKeyWords(CONSTANTS.PICK_BAN_KEYWORD)) return;
 
         // make sure the right team chooses
         if (currentTurn !== determineTeam(sender.ircUsername, data.required.teams)) {

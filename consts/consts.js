@@ -1,4 +1,4 @@
-const version = "0.3.4";
+const version = "0.3.5";
 const commandPrefix = "!";
 
 const lobbySize = 16;
@@ -14,6 +14,9 @@ const oneMinMs = 60 * 1 * 1000;
 
 const tenSecs = 1 * 10;
 const tenSecsMs = 1 * 10 * 10000;
+
+const pickBanKeyword = ["pick", "ban"];
+const poolKeyword = ["nm", "hd", "hr", "fm", "dt"];
 
 module.exports = Object.freeze({
     VERSION: version,
@@ -31,5 +34,8 @@ module.exports = Object.freeze({
     ONE_MIN_MS: oneMinMs,
 
     TEN_SECS: tenSecs,
-    TEN_SECS_MS: tenSecsMs
+    TEN_SECS_MS: tenSecsMs,
+
+    PICK_BAN_KEYWORD: pickBanKeyword,
+    POOL_KEYWORD: poolKeyword
 });
