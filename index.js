@@ -361,6 +361,7 @@ async function pickPhase(firstToPick, data) {
     let currentMapPlayed = false;
     let team_1_picks = [];
     let team_2_picks = [];
+    let match_score = [0, 0];
     let available_picks = Object.keys(data.required.pool);
 
     console.log(available_picks);
@@ -411,8 +412,6 @@ async function pickPhase(firstToPick, data) {
         currentMapPlayed = false;
         temporaryStopRecievingMessage = true;
 
-        delete available_picks[content];
-
         await lobby.startTimer(data.optional.map_wait_time);
     });
 
@@ -423,27 +422,82 @@ async function pickPhase(firstToPick, data) {
 
     // detect when the map is finished
     lobby.on("matchFinished", this.eventListener = async (playerScores) => {
-        console.log("no way we reach this right");
-
-        let team_1_scores = 0;
-        let team_2_scores = 0;
+        let team_1_score = 0;
+        let team_2_score = 0;
 
         currentMapPlayed = true;
 
         // TODO: calculate scores
+        for (const s of playerScores) {
+            const score = s.score;
+            const banchoPlayer = s.player;
+
+            if (data.required.teams.team_1.player_names.include(determineTeam(banchoPlayer.user.ircUsername))) {
+                team_1_score += score;
+            }
+            if (data.required.teams.team_2.player_names.include(determineTeam(banchoPlayer.user.ircUsername))) {
+                team_2_score += score;
+            }
+        }
+
+        if (team_1_score > team_2_score) {
+            match_score[0] += 1;
+        } else if (team_1_score < team_2_score) {
+            match_score[1] += 1;
+        } else {
+            // TODO: handle tie score
+            // await channel.sendMessage(fetchmsg.fetchMessage("tie_score"));
+
+            match_score[0] += 1;
+
+            // return;
+        }
+
+        await channel.sendMessage(fetchmsg.fetchMessage("score").replace("<team_1_name>", data.required.teams.team_1.team_name)
+                                                                .replace("<team_1_score>", match_score[0])
+                                                                .replace("<team_2_score>", match_score[1])
+                                                                .replace("<team_2_name>", data.required.teams.team_2.team_name)
+                                                                .replace("<best_of>", data.required.bo));
+
+        if (match_score[0] === 1 + Math.ceil(data.required.bo / 2) || match_score[1] === 1 + Math.ceil(data.required.bo / 2)) {
+            const winner = match_score[0] === 1 + Math.ceil(data.required.bo / 2) ? data.required.teams.team_1.team_name 
+                                                                                  : data.required.teams.team_2.team_name;
+
+            await channel.sendMessage(fetchmsg.fetchMessage("match_finished").replace("<team_1_name>", data.required.teams.team_1.team_name)
+                                                .replace("<team_1_score>", match_score[0])
+                                                .replace("<team_2_score>", match_score[1])
+                                                .replace("<team_2_name>", data.required.teams.team_2.team_name)
+                                                .replace("<winner_name>", winner));
 
 
-        await channel.sendMessage(fetchmsg.fetchMessage("score"));
+            await channel.sendMessage(fetchmsg.fetchMessage("ending"));
+        } else if (match_score[0] === match_score[1] && match_score[0] + match_score[1] === data.required.bo - 1) {
+            await channel.sendMessage(fetchmsg.fetchMessage("tiebreaker"));
 
-        temporaryStopRecievingMessage = false;
+            // available_picks.splice(available_picks.indexOf(content), 1);
 
-        await channel.sendMessage(fetchmsg.fetchMessage("pick_start").replace("<player_name>", firstToPick)
-                                          .replace("<maps_available>", helpers.printStringArray(available_picks))
-                                          .replace("<pick_time>", data.optional.ban_pick_time));
+            // TODO: tiebreaker should be freemod
+            lobby.setMap(data.required.pool["tb"]);
+            lobby.setMods(helpers.determineMod("nm", data.optional.score_mode));
+    
+            currentMapPlayed = false;
+    
+            await lobby.startTimer(data.optional.map_wait_time + oneMin);
+        } else {
+            temporaryStopRecievingMessage = false;
 
-        await lobby.startTimer(data.optional.ban_pick_time);
+            pickTurn += 1;
+            pickTeam = pickTeam === data.required.teams.team_1.team_name ? data.required.teams.team_2.team_name
+                                                                         : data.required.teams.team_1.team_name;
 
-        console.log(available_picks);
+            await channel.sendMessage(fetchmsg.fetchMessage("pick_start").replace("<player_name>", firstToPick)
+                                              .replace("<maps_available>", helpers.printStringArray(available_picks))
+                                              .replace("<pick_time>", data.optional.ban_pick_time));
+    
+            await lobby.startTimer(data.optional.ban_pick_time);
+    
+            console.log(available_picks);
+        }
     })
 }
 

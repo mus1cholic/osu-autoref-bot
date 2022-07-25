@@ -68,11 +68,13 @@ module.exports = {
             case "pick_reserve_ran_out":
                 return "<player_name>, you have exceeded the maximum amount of time available for a ban as well as used up all your reserve time. A random map will now be picked."
             case "score":
-                return "<player_name> <player_name_score> - <player_name_score> <player_name>. This match is a best of <best_of>."
-            case "tiebreaker":
+                return "<team_1_name> <team_1_score> - <team_2_score> <team_1_name>. This match is a best of <best_of>."
+            case "tie_score":
                 return "The score is a tie! The map will now be replayed."
+            case "tiebreaker":
+                return "It's time for tiebreaker!"
             case "match_finished":
-                return "<player_name> <player_name_score> - <player_name_score> <player_name>. Congratulations to <player_name>, you have won the match. Good game to both players!"
+                return "<team_1_name> <team_1_score> - <team_2_score> <team_1_name>. Congratulations to <winner_name>, you have won the match. Good game to both players! Feel free to leave the lobby."
             case "ending":
                 return `Thank you for using AutoRef v<version>. If you have any concerns or feedback, please fill out our form <here>. We hope you have a good rest of the day!`
             case "default":
