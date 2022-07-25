@@ -455,13 +455,14 @@ async function pickPhase(firstToPick, maps, data) {
             match_score[0] += 1;
         } else if (team_1_score < team_2_score) {
             match_score[1] += 1;
-        } else {
-            // TODO: handle tie score
+        } else {     
             // await channel.sendMessage(fetchmsg.fetchMessage("tie_score"));
-
-            match_score[0] += 1;
+            // currentMapPlayed = false;
 
             // return;
+
+            if (Math.random() > 0.5) match_score[0] += 1;
+            else match_score[1] += 1;
         }
 
 
