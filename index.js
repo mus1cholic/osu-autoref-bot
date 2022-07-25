@@ -1,6 +1,6 @@
-const Banchojs = require("bancho.js");
-
 const ee = require("node:events");
+
+const Banchojs = require("bancho.js");
 
 const CONSTANTS = require('./consts/consts');
 const helpers = require('./consts/helpers');
@@ -23,11 +23,10 @@ function reorderData(config) {
     const newData = JSON.parse(JSON.stringify(config));
 
     // setting up lobby title
-    newData.optional.match_title = newData.optional.match_title.replace("<tournament_initials>", newData.required.tournament_initials);
-    newData.optional.match_title = newData.optional.match_title.replace("<team_1_players>", newData.required.teams.team_1.team_name);
-    newData.optional.match_title = newData.optional.match_title.replace("<team_2_players>", newData.required.teams.team_2.team_name);
+    newData.optional.match_title = newData.optional.match_title.replace("<tournament_initials>", newData.required.tournament_initials)
+                                                               .replace("<team_1_players>", newData.required.teams.team_1.team_name)
+                                                               .replace("<team_2_players>", newData.required.teams.team_2.team_name);
 
-    console.log(newData.optional.score_mode);
     // setting up score mode
     if (newData.optional.score_mode === "v2") {
         newData.optional.score_mode = Banchojs.BanchoLobbyWinConditions.ScoreV2;
@@ -88,7 +87,7 @@ async function setupMatch(data) {
     // await lobby.setPassword(password);
     await lobby.setPassword("1");
 
-    lobby.setSettings(data.required.team_mode, data.required.score_mode, CONSTANTS.LOBBY_SIZE);
+    lobby.setSettings(data.required.team_mode, data.optional.score_mode, CONSTANTS.LOBBY_SIZE);
 
     // Setting up all the players
     let team_1_players = [];
@@ -177,6 +176,7 @@ async function interruptStartTimeout() {
 async function createLobbyListeners(data) {
     // the lobby can only be "full" if the last action is a player joining, so we don't
     // need any other lobby listeners like playerLeft
+    // TODO: assign teams
     lobby.on("playerJoined", this.eventListener = async (object) => {
         let team_1_players_in_lobby = 0;
         let team_2_players_in_lobby = 0;
@@ -221,6 +221,7 @@ async function rollPhase(data) {
     rolls[data.required.teams.team_1.team_name] = -1;
     rolls[data.required.teams.team_2.team_name] = 0;
 
+    // TODO: ensure a roll of greater than 100 does not count
     channel.on("message", this.eventListener = async (msg) => {
         // thanks @clxxiii for this piece of code
 
@@ -325,7 +326,7 @@ async function banPhase(firstToBan, firstToPick, data) {
 
         // if this is the last ban, then we remove the listener, update data, and move onto pick phase
         if (banTurn === data.optional.bans * 2) {
-            await lobby.abortTimer();
+            // await lobby.abortTimer(); // don't need this since we're setting a new timer immediately after
 
             const available_maps = data.required.pool;
             for (const ban of team_1_bans) {
@@ -336,7 +337,7 @@ async function banPhase(firstToBan, firstToPick, data) {
             }
             data.required.pool = available_maps;
             channel.removeListener("message", this.eventListener);
-            await pickPhase(firstToPick, data);
+            await pickPhase(firstToPick, available_bans, data);
         } else {
             // change banTeam and increment banTurn
             // await lobby.abortTimer(); // don't need this since we're setting a new timer immediately after
@@ -354,7 +355,7 @@ async function banPhase(firstToBan, firstToPick, data) {
     });
 }
 
-async function pickPhase(firstToPick, data) {
+async function pickPhase(firstToPick, maps, data) {
     let pickTeam = firstToPick;
     let pickTurn = 1;
     let temporaryStopRecievingMessage = false;
@@ -362,10 +363,9 @@ async function pickPhase(firstToPick, data) {
     let team_1_picks = [];
     let team_2_picks = [];
     let match_score = [0, 0];
-    let available_picks = Object.keys(data.required.pool);
+    let available_picks = maps;
 
-    console.log(available_picks);
-
+    await channel.sendMessage(fetchmsg.fetchMessage("match_start".replace("<best_of>", data.required.bo)));
     await channel.sendMessage(fetchmsg.fetchMessage("pick_start").replace("<player_name>", firstToPick)
                                                                  .replace("<maps_available>", helpers.printStringArray(available_picks))
                                                                  .replace("<pick_time>", data.optional.ban_pick_time));
@@ -432,10 +432,10 @@ async function pickPhase(firstToPick, data) {
             const score = s.score;
             const banchoPlayer = s.player;
 
-            if (data.required.teams.team_1.player_names.include(determineTeam(banchoPlayer.user.ircUsername))) {
+            if (data.required.teams.team_1.player_names.includes(determineTeam(banchoPlayer.user.ircUsername, data.required.teams))) {
                 team_1_score += score;
             }
-            if (data.required.teams.team_2.player_names.include(determineTeam(banchoPlayer.user.ircUsername))) {
+            if (data.required.teams.team_2.player_names.includes(determineTeam(banchoPlayer.user.ircUsername, data.required.teams))) {
                 team_2_score += score;
             }
         }
@@ -453,14 +453,9 @@ async function pickPhase(firstToPick, data) {
             // return;
         }
 
-        await channel.sendMessage(fetchmsg.fetchMessage("score").replace("<team_1_name>", data.required.teams.team_1.team_name)
-                                                                .replace("<team_1_score>", match_score[0])
-                                                                .replace("<team_2_score>", match_score[1])
-                                                                .replace("<team_2_name>", data.required.teams.team_2.team_name)
-                                                                .replace("<best_of>", data.required.bo));
 
-        if (match_score[0] === 1 + Math.ceil(data.required.bo / 2) || match_score[1] === 1 + Math.ceil(data.required.bo / 2)) {
-            const winner = match_score[0] === 1 + Math.ceil(data.required.bo / 2) ? data.required.teams.team_1.team_name 
+        if (match_score[0] === 1 + Math.floor(data.required.bo / 2) || match_score[1] === 1 + Math.floor(data.required.bo / 2)) {
+            const winner = match_score[0] === 1 + Math.floor(data.required.bo / 2) ? data.required.teams.team_1.team_name 
                                                                                   : data.required.teams.team_2.team_name;
 
             await channel.sendMessage(fetchmsg.fetchMessage("match_finished").replace("<team_1_name>", data.required.teams.team_1.team_name)
@@ -470,8 +465,20 @@ async function pickPhase(firstToPick, data) {
                                                 .replace("<winner_name>", winner));
 
 
-            await channel.sendMessage(fetchmsg.fetchMessage("ending"));
+            await channel.sendMessage(fetchmsg.fetchMessage("ending").replace("<version>", CONSTANTS.VERSION));
+
+            setTimeout(function() {
+                await lobby.closeLobby();
+                await close();
+            }, CONSTANTS.ONE_MIN_MS);
         } else if (match_score[0] === match_score[1] && match_score[0] + match_score[1] === data.required.bo - 1) {
+
+            await channel.sendMessage(fetchmsg.fetchMessage("score").replace("<team_1_name>", data.required.teams.team_1.team_name)
+                                              .replace("<team_1_score>", match_score[0])
+                                              .replace("<team_2_score>", match_score[1])
+                                              .replace("<team_2_name>", data.required.teams.team_2.team_name)
+                                              .replace("<best_of>", data.required.bo));
+
             await channel.sendMessage(fetchmsg.fetchMessage("tiebreaker"));
 
             // available_picks.splice(available_picks.indexOf(content), 1);
@@ -484,6 +491,12 @@ async function pickPhase(firstToPick, data) {
     
             await lobby.startTimer(data.optional.map_wait_time + oneMin);
         } else {
+            await channel.sendMessage(fetchmsg.fetchMessage("score").replace("<team_1_name>", data.required.teams.team_1.team_name)
+                                              .replace("<team_1_score>", match_score[0])
+                                              .replace("<team_2_score>", match_score[1])
+                                              .replace("<team_2_name>", data.required.teams.team_2.team_name)
+                                              .replace("<best_of>", data.required.bo));
+
             temporaryStopRecievingMessage = false;
 
             pickTurn += 1;
@@ -495,8 +508,6 @@ async function pickPhase(firstToPick, data) {
                                               .replace("<pick_time>", data.optional.ban_pick_time));
     
             await lobby.startTimer(data.optional.ban_pick_time);
-    
-            console.log(available_picks);
         }
     })
 }
@@ -514,20 +525,20 @@ async function createPMListeners() {
         // TODO: when I PM myself, I get "You have not yet joined this channel" from BanchoBot
 
         if (!message.self) {
-            if (content.startsWith("!")) { 
+            if (content.startsWith(CONSTANTS.COMMAND_PREFIX)) { 
                 const msg = content.substring(1).split(' ');
     
                 // TODO: move this to a different file for cleanliness
                 switch (msg[0]) {
                     case "commands":
-                        await sender.sendMessage(fetchmsg.fetchMessage("!commands"));
+                        await sender.sendMessage(fetchmsg.fetchMessage(CONSTANTS.COMMAND_PREFIX + "commands"));
                         break;
                     case "invite":
                         if (lobby === null) {
                             await sender.sendMessage(fetchmsg.fetchMessage("no_pending_matches"));
                         }
     
-                        await sender.sendMessage(fetchmsg.fetchMessage("!invite"));
+                        await sender.sendMessage(fetchmsg.fetchMessage(CONSTANTS.COMMAND_PREFIX + "invite"));
                         await lobby.invitePlayer(sender.ircUsername);
                         break;
                     case "startnow":
@@ -558,6 +569,12 @@ function determineTeam(playerName, teams) {
 
     return false;
 }
+
+async function close() {
+    console.log("Closing...");
+    await client.disconnect();
+    console.log("Closed.");
+  }
 
 init().then(() => {
     

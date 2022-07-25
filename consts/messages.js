@@ -1,3 +1,5 @@
+const CONSTANTS = require('./consts/consts');
+
 module.exports = {
     fetchMessage: function (message_id) {
         switch (message_id) {
@@ -18,7 +20,7 @@ module.exports = {
             case "not_in_lobby":
                 return "It seems that you are currently in a match and are not in the lobby. If you need another invite, please type !invite."
             case "roll_start":
-                return "The required players have joined the lobby, the match will start now. Please roll in order to determine ban/pick sequence."
+                return "The required players have joined the lobby, the match will now start. Both players, please roll in order to determine ban/pick sequence."
             case "roll_tie":
                 return "The roll is a tie. Please roll again."
             case "roll_winner_sequence":
@@ -55,6 +57,8 @@ module.exports = {
                 return ""
             case "bans_finish":
                 return "Bans have now concluded. <player_name> banned <map_bans> and <player_name> banned <map_bans>"
+            case "match_start": 
+                return "The match will now start. This match is a best of <best_of>."
             case "pick_start":
                 return "<player_name>, it is your turn to pick. Valid picks are are <maps_available>. You have <pick_time> seconds."
             case "poick_wrong_player":
@@ -68,28 +72,28 @@ module.exports = {
             case "pick_reserve_ran_out":
                 return "<player_name>, you have exceeded the maximum amount of time available for a ban as well as used up all your reserve time. A random map will now be picked."
             case "score":
-                return "<team_1_name> <team_1_score> - <team_2_score> <team_1_name>. This match is a best of <best_of>."
+                return "Current score: <team_1_name> <team_1_score> - <team_2_score> <team_2_name>. This match is a best of <best_of>."
             case "tie_score":
                 return "The score is a tie! The map will now be replayed."
             case "tiebreaker":
                 return "It's time for tiebreaker!"
             case "match_finished":
-                return "<team_1_name> <team_1_score> - <team_2_score> <team_1_name>. Congratulations to <winner_name>, you have won the match. Good game to both players! Feel free to leave the lobby."
+                return "Current score: <team_1_name> <team_1_score> - <team_2_score> <team_1_name>. Congratulations to <winner_name>, you have won the match. Good game to both players! Feel free to leave the lobby."
             case "ending":
                 return `Thank you for using AutoRef v<version>. If you have any concerns or feedback, please fill out our form <here>. We hope you have a good rest of the day!`
             case "default":
                 return "You are talking to AutoRef Bot v<version>. If you are curious to what this is, please check out our website <here>.";
-            case "!commands":
+            case CONSTANTS.COMMAND_PREFIX + "commands":
                 return "Please view a full list of our commands <here>."
-            case "!invite":
+            case CONSTANTS.COMMAND_PREFIX + "invite":
                 return "Sending an invite now. If you didn't get it, please wait a bit or type !invite again."
-            case "!startnow":
+            case CONSTANTS.COMMAND_PREFIX + "startnow":
                 return "<player_name>, your opponent has requested to start the match now instead of <datetime>. If you wish to accept, please type !acceptstartnow"
             case "start_now_error":
                 return "Error: you do not have a pending match."
             case "no_pending_matches":
                 return "Error: you do not have a pending match."
-            case "!acceptstartnow":
+            case CONSTANTS.COMMAND_PREFIX + "acceptstartnow":
                 return "You have accepted the request. The match will now be starting. Please join the lobby. If you need an invite, please type !invite."
             case "accept_start_now_error":
                 return "Error: no one has sent you a startnow request yet."
