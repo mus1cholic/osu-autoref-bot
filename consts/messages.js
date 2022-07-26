@@ -74,7 +74,7 @@ module.exports = {
             case "fm_allowed_mods_multiplier":
                 return "Allowed mods: <fm_allowed_mods_multiplier>"
             case "fm_player_wrong_mods":
-                return "Someone in the lobby has a wrong mod combination! Allowed mods: <fm_allowed_mods_multiplier>"
+                return "<player_name>, you have the wrong mod combination! Allowed mods: <fm_allowed_mods_multiplier>"
             case "score":
                 return "Current score: <team_1_name> <team_1_score> - <team_2_score> <team_2_name>. This match is a best of <best_of>."
             case "tie_score":

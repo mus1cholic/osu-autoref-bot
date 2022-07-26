@@ -436,9 +436,16 @@ async function pickPhase(firstToPick, maps, data) {
     // detect if players are ready and the new map is chosen
     lobby.on("allPlayersReady", this.eventListener = async (obj) => {
         if (!currentMapPlayed) {
-            if (freemod && !helpers.checkValidFreemodRules(lobby.slots, Object.keys(pool.optional.fm_allowed_mods_multiplier))) {
-                await channel.sendMessage(fetchmsg.fetchMessage("fm_player_wrong_mods").replace("<fm_player_wrong_mods>",
-                                                                helpers.printStringDict(pool.optional.fm_allowed_mods_multiplier)));
+            if (freemod) {
+                for (const p in lobby.slots) {
+                    if (!helpers.checkValidFreemodRules(lobby.slots, Object.keys(pool.optional.fm_allowed_mods_multiplier))) {
+                        await channel.sendMessage(fetchmsg.fetchMessage("fm_player_wrong_mods")
+                                                          .replace("<player_name>", p.user.ircUsername)
+                                                          .replace("<fm_player_wrong_mods>",
+                                                                   helpers.printStringDict(pool.optional.fm_allowed_mods_multiplier)));
+                        return;
+                    }
+                }
             }
 
             lobby.startMatch(CONSTANTS.TEN_SECS);

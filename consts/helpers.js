@@ -58,11 +58,15 @@ function determineMod(str, score_mode) {
 
 function checkValidFreemodRules(playerArray, allowedMods) {
     const allowedModsBitArray = allowedMods.map(mod => parseShortMods(mod));
-    for (const p in playerArray) {
-        const playerMods = Banchojs.BanchoMods.parseBitFlags(p.mods.enumValue);
+    // for (const p in playerArray) {
+    //     const playerMods = Banchojs.BanchoMods.parseBitFlags(p.mods.enumValue);
         
-        if (!allowedModsBitArray.includes(playerMods)) return false;
-    }
+    //     if (!allowedModsBitArray.includes(playerMods)) return false;
+    // }
+
+    const playerMods = Banchojs.BanchoMods.parseBitFlags(p.mods.enumValue);
+    
+    if (!allowedModsBitArray.includes(playerMods)) return false;
 
     return true;
 }
