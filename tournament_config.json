@@ -73,6 +73,13 @@
         "ban_pick_time": "90",
         "map_wait_time": "90",
         "reserve_time": "300",
-        "abort_rules": "default"
+        "abort_rules": "default",
+        "fm_allowed_mods_multiplier": {
+            "nm": "0.8",
+            "hd": "1",
+            "hr": "1",
+            "fl": "1",
+            "ez": "0.75"
+        }
     }
 }
