@@ -43,7 +43,7 @@ function determineTeam(playerName, teams) {
 }
 
 function determineMod(str, score_mode) {
-    let prefix = str.substring(0, 2).toUpperCase();
+    let prefix = str.substring(0, 2);
     let freemod = false;
 
     if (prefix === "fm") {
@@ -51,13 +51,13 @@ function determineMod(str, score_mode) {
         freemod = true;
     }
 
-    if (score_mode === Banchojs.BanchoLobbyWinConditions.ScoreV2) prefix += "NF";
+    if (score_mode === Banchojs.BanchoLobbyWinConditions.ScoreV2) prefix += "nf";
 
     return [Banchojs.BanchoMods.parseShortMods(prefix), freemod];
 }
 
 function checkValidFreemodRules(playerArray, allowedMods) {
-    const allowedModsBitArray = allowedMods.map(mod => parseShortMods(mod));
+    const allowedModsBitArray = allowedMods.map(mod => Banchojs.BanchoMods.parseShortMods(mod));
     // for (const p in playerArray) {
     //     const playerMods = Banchojs.BanchoMods.parseBitFlags(p.mods.enumValue);
         

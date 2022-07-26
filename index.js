@@ -289,6 +289,12 @@ async function banPhase(firstToBan, firstToPick, data) {
 
     available_bans.splice(available_bans.indexOf("tb"), 1);
 
+    // we first check if there will be bans in the tournament
+    if (data.optional.bans === "0") {
+        channel.removeListener("message", this.eventListener);
+        await pickPhase(firstToPick, available_bans, data);
+    }
+
     await channel.sendMessage(fetchmsg.fetchMessage("ban_start").replace("<player_name>", firstToBan)
                                                                 .replace("<ban_total>", fetchmsg.fetchMessage("1"))
                                                                 .replace("<maps_available>", helpers.printStringArray(available_bans))
@@ -424,8 +430,8 @@ async function pickPhase(firstToPick, maps, data) {
         lobby.setMods(mods[0], freemod);
 
         if (freemod) await channel.sendMessage(fetchmsg.fetchMessage("fm_allowed_mods_multiplier")
-                                                       .replace("<fm_allowed_mods_multiplier>",
-                                                                helpers.printStringDict(pool.optional.fm_allowed_mods_multiplier)));
+                                                       .replace("<allowed_mods>",
+                                                                helpers.printStringDict(data.optional.fm_allowed_mods_multiplier)));
 
         currentMapPlayed = false;
         temporaryStopRecievingMessage = true;
@@ -438,11 +444,11 @@ async function pickPhase(firstToPick, maps, data) {
         if (!currentMapPlayed) {
             if (freemod) {
                 for (const p in lobby.slots) {
-                    if (!helpers.checkValidFreemodRules(lobby.slots, Object.keys(pool.optional.fm_allowed_mods_multiplier))) {
+                    if (!helpers.checkValidFreemodRules(lobby.slots, Object.keys(data.optional.fm_allowed_mods_multiplier))) {
                         await channel.sendMessage(fetchmsg.fetchMessage("fm_player_wrong_mods")
                                                           .replace("<player_name>", p.user.ircUsername)
-                                                          .replace("<fm_player_wrong_mods>",
-                                                                   helpers.printStringDict(pool.optional.fm_allowed_mods_multiplier)));
+                                                          .replace("<allowed_mods>",
+                                                                   helpers.printStringDict(data.optional.fm_allowed_mods_multiplier)));
                         return;
                     }
                 }
