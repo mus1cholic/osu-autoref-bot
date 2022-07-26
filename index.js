@@ -242,11 +242,11 @@ async function rollPhase(data) {
         if (!roll) return;
         rollVerification[sender.ircUsername] = null;
 
-        if (determineTeam(roll.groups.user, data.required.teams) === data.required.teams.team_1.team_name 
+        if (helpers.determineTeam(roll.groups.user, data.required.teams) === data.required.teams.team_1.team_name 
             && rolls[data.required.teams.team_1.team_name] === -1) {
             rolls[data.required.teams.team_1.team_name] = parseInt(roll.groups.roll);
         }
-        if (determineTeam(roll.groups.user, data.required.teams) === data.required.teams.team_2.team_name
+        if (helpers.determineTeam(roll.groups.user, data.required.teams) === data.required.teams.team_2.team_name
         && rolls[data.required.teams.team_2.team_name] === 0) {
             rolls[data.required.teams.team_2.team_name] = parseInt(roll.groups.roll);
         }
@@ -282,7 +282,7 @@ async function determineBanPickSequencePhase(rollWinner, rollLoser, data) {
         await banPhase(sequence.banFirst, sequence.pickFirst, data);  
     });
 
-    rollSystems.processRollSystems(rollWinner, rollLoser, data, channel, determineTeam, myEmitter);
+    rollSystems.processRollSystems(rollWinner, rollLoser, data, channel, myEmitter);
 }
 
 async function banPhase(firstToBan, firstToPick, data) {
@@ -314,7 +314,7 @@ async function banPhase(firstToBan, firstToPick, data) {
         if (!helpers.checkSpecialKeyWords(content.toLowerCase(), CONSTANTS.POOL_KEYWORD)) return;
 
         // make sure the right team bans
-        if (banTeam !== determineTeam(sender.ircUsername, data.required.teams)) {
+        if (banTeam !== helpers.determineTeam(sender.ircUsername, data.required.teams)) {
             await channel.sendMessage(fetchmsg.fetchMessage("ban_wrong_player").replace("<player_name>", sender.ircUsername));
             return;
         }
@@ -398,7 +398,7 @@ async function pickPhase(firstToPick, maps, data) {
         if (!helpers.checkSpecialKeyWords(content.toLowerCase(), CONSTANTS.POOL_KEYWORD)) return;
 
         // make sure the right team picks
-        if (pickTeam !== determineTeam(sender.ircUsername, data.required.teams)) {
+        if (pickTeam !== helpers.determineTeam(sender.ircUsername, data.required.teams)) {
             await channel.sendMessage(fetchmsg.fetchMessage("pick_wrong_player").replace("<player_name>", sender.ircUsername));
             return;
         }
@@ -446,10 +446,10 @@ async function pickPhase(firstToPick, maps, data) {
             const score = s.score;
             const banchoPlayer = s.player;
 
-            if (data.required.teams.team_1.player_names.includes(determineTeam(banchoPlayer.user.ircUsername, data.required.teams))) {
+            if (data.required.teams.team_1.player_names.includes(helpers.determineTeam(banchoPlayer.user.ircUsername, data.required.teams))) {
                 team_1_score += score;
             }
-            if (data.required.teams.team_2.player_names.includes(determineTeam(banchoPlayer.user.ircUsername, data.required.teams))) {
+            if (data.required.teams.team_2.player_names.includes(helpers.determineTeam(banchoPlayer.user.ircUsername, data.required.teams))) {
                 team_2_score += score;
             }
         }
@@ -504,7 +504,7 @@ async function pickPhase(firstToPick, maps, data) {
     
             currentMapPlayed = false;
     
-            await lobby.startTimer(data.optional.map_wait_time + CONSTANTS.ONE_MIN);
+            await lobby.startTimer(data.optional.map_wait_time + CONSTANTS.ONE_MIN / 60);
         } else {
             await channel.sendMessage(fetchmsg.fetchMessage("score").replace("<team_1_name>", data.required.teams.team_1.team_name)
                                               .replace("<team_1_score>", match_score[0])
@@ -594,21 +594,11 @@ async function createLobbyCommandsListeners() {
     });
 }
 
-function determineTeam(playerName, teams) {
-    // usually, if the player is not in team 1, the player must be in team 2.
-    // however, if a player not in both teams comes into the lobby and types
-    // it will mess up the system, so we check for both
-    if (teams.team_1.player_names.includes(playerName)) return teams.team_1.team_name;
-    if (teams.team_2.player_names.includes(playerName)) return teams.team_2.team_name;
-
-    return false;
-}
-
 async function close() {
     console.log("Closing...");
     await client.disconnect();
     console.log("Closed.");
-  }
+}
 
 init().then(() => {
     

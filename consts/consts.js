@@ -3,6 +3,7 @@ const commandPrefix = "!";
 
 const lobbySize = 16;
 
+// TODO: make seconds equivalents
 const fifteenMins = 60 * 15;
 const fifteenMinsMs = 60 * 15 * 1000;
 const tenMins = 60 * 10;

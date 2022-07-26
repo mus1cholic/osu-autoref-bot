@@ -19,7 +19,7 @@ function storeBans(content, active, passive) {
 }
 
 // TODO: make this a class and make every system an instance?
-async function ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitter) {
+async function ukcc(rollWinner, rollLoser, data, channel, myEmitter) {
     let teamChoices = {
         rollWinner: {
             "pick": "",
@@ -51,7 +51,7 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitt
         if (!helpers.checkSpecialKeyWords(content.toLowerCase(), CONSTANTS.PICK_BAN_KEYWORD)) return;
 
         // make sure the right team chooses
-        if (currentTurn !== determineTeam(sender.ircUsername, data.required.teams)) {
+        if (currentTurn !== helpers.determineTeam(sender.ircUsername, data.required.teams)) {
             await channel.sendMessage(fetchmsg.fetchMessage("roll_sequence_wrong_player").replace("<player_name>", sender.ircUsername));
             return;
         }
@@ -99,12 +99,12 @@ async function ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitt
     });
 }
 
-async function processRollSystems(rollWinner, rollLoser, data, channel, determineTeam, myEmitter) {
+async function processRollSystems(rollWinner, rollLoser, data, channel, myEmitter) {
     const rollSystem = data.optional.roll_system
 
     // for now we use UKCC roll system:
     if (rollSystem === "ukcc") {
-        await ukcc(rollWinner, rollLoser, data, channel, determineTeam, myEmitter);
+        await ukcc(rollWinner, rollLoser, data, channel, myEmitter);
     }
 }
 
