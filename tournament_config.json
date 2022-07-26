@@ -76,9 +76,9 @@
         "abort_rules": "default",
         "fm_allowed_mods_multiplier": {
             "nm": "0.8",
-            "hd": "1",
-            "hr": "1",
-            "fl": "1",
+            "hd": "1.00",
+            "hr": "1.00",
+            "fl": "1.00",
             "ez": "0.75"
         }
     }

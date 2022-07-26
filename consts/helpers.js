@@ -5,11 +5,28 @@ function printStringArray(arr) {
     
     for (const [i, v] of arr.entries()) {
         if (i === arr.length - 1) {
-            ret += v;
+            ret += `${v}.`;
             break;
         }
 
-        ret += v + ", ";
+        ret += `${v}, `;
+    }
+
+    return ret;
+}
+
+function printStringDict(dict) {
+    let ret = "";
+
+    const keys = Object.keys(dict);
+
+    for (const [i, v] in keys.entries()) {
+        if (i === keys.length - 1) {
+            ret += `${v}: ${dict.v}`;
+            break;
+        }
+
+        ret += `${v}: ${dict.v}, `
     }
 
     return ret;
@@ -52,6 +69,7 @@ function checkSpecialKeyWords(str, keyWords) {
 
 module.exports = {
     printStringArray,
+    printStringDict,
     determineTeam,
     determineMod,
     checkSpecialKeyWords
