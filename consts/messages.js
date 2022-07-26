@@ -73,6 +73,8 @@ module.exports = {
                 return "<player_name>, you have exceeded the maximum amount of time available for a ban as well as used up all your reserve time. A random map will now be picked."
             case "fm_allowed_mods_multiplier":
                 return "Allowed mods: <fm_allowed_mods_multiplier>"
+            case "fm_player_wrong_mods":
+                return "Someone in the lobby has a wrong mod combination! Allowed mods: <fm_allowed_mods_multiplier>"
             case "score":
                 return "Current score: <team_1_name> <team_1_score> - <team_2_score> <team_2_name>. This match is a best of <best_of>."
             case "tie_score":

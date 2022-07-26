@@ -1,4 +1,4 @@
-const version = "0.3.6";
+const version = "0.3.7";
 const commandPrefix = "!";
 
 const lobbySize = 16;

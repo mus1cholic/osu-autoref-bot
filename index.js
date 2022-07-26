@@ -366,6 +366,7 @@ async function pickPhase(firstToPick, maps, data) {
     let pickTurn = 1;
     let temporaryStopRecievingMessage = false;
     let currentMapPlayed = false;
+    let freemod = false;
     let team_1_picks = [];
     let team_2_picks = [];
     let match_score = [0, 0];
@@ -414,9 +415,17 @@ async function pickPhase(firstToPick, maps, data) {
 
         available_picks.splice(available_picks.indexOf(content), 1);
 
-        // TODO: FREEMOD DETECTION
+        
         lobby.setMap(data.required.pool[content]);
-        lobby.setMods(helpers.determineMod(content, data.optional.score_mode));
+
+        const mods = helpers.determineMod(content, data.optional.score_mode);
+        freemod = mods[1];
+
+        lobby.setMods(mods[0], freemod);
+
+        if (freemod) await channel.sendMessage(fetchmsg.fetchMessage("fm_allowed_mods_multiplier")
+                                                       .replace("<fm_allowed_mods_multiplier>",
+                                                                helpers.printStringDict(pool.optional.fm_allowed_mods_multiplier)));
 
         currentMapPlayed = false;
         temporaryStopRecievingMessage = true;
@@ -426,7 +435,14 @@ async function pickPhase(firstToPick, maps, data) {
 
     // detect if players are ready and the new map is chosen
     lobby.on("allPlayersReady", this.eventListener = async (obj) => {
-        if (!currentMapPlayed) lobby.startMatch(CONSTANTS.TEN_SECS);
+        if (!currentMapPlayed) {
+            if (freemod && !helpers.checkValidFreemodRules(lobby.slots, Object.keys(pool.optional.fm_allowed_mods_multiplier))) {
+                await channel.sendMessage(fetchmsg.fetchMessage("fm_player_wrong_mods").replace("<fm_player_wrong_mods>",
+                                                                helpers.printStringDict(pool.optional.fm_allowed_mods_multiplier)));
+            }
+
+            lobby.startMatch(CONSTANTS.TEN_SECS);
+        }
     })
 
     // detect when the map is finished
@@ -493,9 +509,8 @@ async function pickPhase(firstToPick, maps, data) {
 
             // available_picks.splice(available_picks.indexOf(content), 1);
 
-            // TODO: tiebreaker should be freemod
             lobby.setMap(data.required.pool["tb"]);
-            lobby.setMods(helpers.determineMod("nm", data.optional.score_mode));
+            lobby.setMods(helpers.determineMod("nm", data.optional.score_mode), true);
     
             currentMapPlayed = false;
     

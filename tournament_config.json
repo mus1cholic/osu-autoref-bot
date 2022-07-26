@@ -35,6 +35,9 @@
             "dt2": "3155266",
             "dt3": "3256526",
             "dt4": "1994939",
+            "fm1": "3677312",
+            "fm2": "2959643",
+            "fm3": "3228701",
             "tb": "3333745"
         },
         "pool_temp": {
@@ -68,18 +71,18 @@
         "score_mode": "v2",
         "forfeit_time": "600",
         "fails_count": "true",
-        "bans": "3",
+        "bans": "2",
         "roll_system": "ukcc",
         "ban_pick_time": "90",
         "map_wait_time": "90",
         "reserve_time": "300",
         "abort_rules": "default",
         "fm_allowed_mods_multiplier": {
-            "nm": "0.8",
             "hd": "1.00",
             "hr": "1.00",
-            "fl": "1.00",
-            "ez": "0.75"
+            "ez": "0.75",
+            "hdhr": "1.00",
+            "hdez": "1.00"
         }
     }
 }

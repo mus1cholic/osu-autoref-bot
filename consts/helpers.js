@@ -43,12 +43,28 @@ function determineTeam(playerName, teams) {
 }
 
 function determineMod(str, score_mode) {
-    // TODO: FREEMOD DETECTION
     let prefix = str.substring(0, 2).toUpperCase();
+    let freemod = false;
+
+    if (prefix === "fm") {
+        prefix = "nm";
+        freemod = true;
+    }
 
     if (score_mode === Banchojs.BanchoLobbyWinConditions.ScoreV2) prefix += "NF";
 
-    return Banchojs.BanchoMods.parseShortMods(prefix);
+    return [Banchojs.BanchoMods.parseShortMods(prefix), freemod];
+}
+
+function checkValidFreemodRules(playerArray, allowedMods) {
+    const allowedModsBitArray = allowedMods.map(mod => parseShortMods(mod));
+    for (const p in playerArray) {
+        const playerMods = Banchojs.BanchoMods.parseBitFlags(p.mods.enumValue);
+        
+        if (!allowedModsBitArray.includes(playerMods)) return false;
+    }
+
+    return true;
 }
 
 function checkPickBanSequenceKeywords(str) {
@@ -94,6 +110,7 @@ module.exports = {
     printStringDict,
     determineTeam,
     determineMod,
+    checkValidFreemodRules,
     checkPickBanSequenceKeywords,
     checkPoolPickBanKeywords
 };
