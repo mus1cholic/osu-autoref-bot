@@ -306,7 +306,7 @@ async function banPhase(firstToBan, firstToPick, data) {
         if (message.self || sender.ircUsername === "BanchoBot") return;
 
         // detect regular message, don't need to do anything
-        if (!helpers.checkSpecialKeyWords(content.toLowerCase(), CONSTANTS.POOL_KEYWORD)) return;
+        if (!helpers.checkPoolPickBanKeywords(content.toLowerCase(), data.required.pool)) return;
 
         // make sure the right team bans
         if (banTeam !== helpers.determineTeam(sender.ircUsername, data.required.teams)) {
@@ -315,7 +315,7 @@ async function banPhase(firstToBan, firstToPick, data) {
         }
 
         // make sure the ban is a valid ban
-        if (!available_bans.includes(content.toLowerCase())) {
+        if (!available_bans.includes(content.toLowerCase()) && content.toLowerCase() !== "tb") {
             await channel.sendMessage(fetchmsg.fetchMessage("ban_wrong_id").replace("<player_name>", sender.ircUsername)
                                               .replace("<maps_available>", helpers.printStringArray(available_bans)));
             return;
@@ -390,7 +390,7 @@ async function pickPhase(firstToPick, maps, data) {
         if (message.self || sender.ircUsername === "BanchoBot") return;
 
         // detect regular message, don't need to do anything
-        if (!helpers.checkSpecialKeyWords(content.toLowerCase(), CONSTANTS.POOL_KEYWORD)) return;
+        if (!helpers.checkPoolPickBanKeywords(content.toLowerCase(), data.required.pool)) return;
 
         // make sure the right team picks
         if (pickTeam !== helpers.determineTeam(sender.ircUsername, data.required.teams)) {
@@ -399,7 +399,7 @@ async function pickPhase(firstToPick, maps, data) {
         }
 
         // make sure the pick is a valid pick
-        if (!available_picks.includes(content.toLowerCase())) {
+        if (!available_picks.includes(content.toLowerCase()) && content.toLowerCase() !== "tb") {
             await channel.sendMessage(fetchmsg.fetchMessage("pick_wrong_id").replace("<player_name>", sender.ircUsername)
                                               .replace("<maps_available>", helpers.printStringArray(available_picks)));
             return;

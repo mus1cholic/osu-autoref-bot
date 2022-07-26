@@ -61,16 +61,32 @@ function checkPickBanSequenceKeywords(str) {
     }
 }
 
-function checkPoolPickBanKeywords() {
+function checkPoolPickBanKeywords(str, pool) {
+    const strSplit = str.split(" ");
 
-}
+    if (strSplit.length > 1) {
+        return false;
+    } else {
+        for (const key of Object.keys(pool)) {
+            // we get the alphabetical part of the pool map codes
+            // and compare it with the alphabetical part of the
+            // string
 
-function checkSpecialKeyWords(str, keyWords) {
-    for (const word of keyWords) {
-        if (str.length >= word.length && str.substring(0, word.length) === word) return true;
+            if (key === "tb") continue;
+
+            const pool_map_slot_code = key.substring(0, key.length - 1); // TODO: currently nm1-9 works but nm10 doesn't work
+            const str_slot_code = str.substring(0, pool_map_slot_code.length);
+
+            const str_slot_number = str.substring(pool_map_slot_code.length);
+
+            if (pool_map_slot_code === str_slot_code &&
+                !isNaN(str_slot_number.substring(0, 1))) {
+                return true;
+            }
+        }
+
+        return false;
     }
-
-    return false;
 }
 
 module.exports = {
@@ -79,5 +95,5 @@ module.exports = {
     determineTeam,
     determineMod,
     checkPickBanSequenceKeywords,
-    checkSpecialKeyWords
+    checkPoolPickBanKeywords
 };
