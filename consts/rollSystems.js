@@ -35,7 +35,6 @@ async function ukcc(rollWinner, rollLoser, data, channel, myEmitter) {
     
     let currentTurn = rollWinner;
 
-    // TODO: .replace("p", "P").replace("b", "B")
     await channel.sendMessage(fetchmsg.fetchMessage("roll_winner_sequence").replace("<player_name>", rollWinner)
                                                                            .replace("<sequence>", helpers.printStringArray(choices)
                                                                            .replaceAll("p", "P").replaceAll("b", "B")));
@@ -49,7 +48,7 @@ async function ukcc(rollWinner, rollLoser, data, channel, myEmitter) {
         if (message.self || sender.ircUsername === "BanchoBot") return;
 
         // detect regular message, don't need to do anything
-        if (!helpers.checkSpecialKeyWords(content.toLowerCase(), CONSTANTS.PICK_BAN_KEYWORD)) return;
+        if (!helpers.checkPickBanSequenceKeywords(content.toLowerCase())) return;
 
         // make sure the right team chooses
         if (currentTurn !== helpers.determineTeam(sender.ircUsername, data.required.teams)) {

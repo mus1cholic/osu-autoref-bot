@@ -68,7 +68,7 @@
         "score_mode": "v2",
         "forfeit_time": "600",
         "fails_count": "true",
-        "bans": "2",
+        "bans": "3",
         "roll_system": "ukcc",
         "ban_pick_time": "90",
         "map_wait_time": "90",

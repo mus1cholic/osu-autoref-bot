@@ -51,8 +51,14 @@ function determineMod(str, score_mode) {
     return Banchojs.BanchoMods.parseShortMods(prefix);
 }
 
-function checkPickBanSequenceKeywords() {
+function checkPickBanSequenceKeywords(str) {
+    const strSplit = str.split(" ");
 
+    if (strSplit.length > 2) {
+        return false;
+    } else {
+        return strSplit[0] === "pick" || strSplit[0] === "ban";
+    }
 }
 
 function checkPoolPickBanKeywords() {
@@ -72,5 +78,6 @@ module.exports = {
     printStringDict,
     determineTeam,
     determineMod,
+    checkPickBanSequenceKeywords,
     checkSpecialKeyWords
 };
