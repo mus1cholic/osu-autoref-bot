@@ -17,19 +17,16 @@ function printStringArray(arr) {
 
 function printStringDict(dict) {
     let ret = "";
+    const entries = Object.entries(dict)
 
-    const keys = Object.keys(dict);
-
-    for (const [i, v] in keys.entries()) {
-        if (i === keys.length - 1) {
-            ret += `${v}: ${dict.v}`;
-            break;
+    entries.forEach(([key, value], index) => {
+        if (index === entries.length - 1) {
+            ret += `${key}: ${value}`;
+            return ret;
         }
 
-        ret += `${v}: ${dict.v}, `
-    }
-
-    return ret;
+        ret += `${key}: ${value}, `
+    });
 }
 
 function determineTeam(playerName, teams) {
@@ -56,15 +53,12 @@ function determineMod(str, score_mode) {
     return [Banchojs.BanchoMods.parseShortMods(prefix), freemod];
 }
 
-function checkValidFreemodRules(playerArray, allowedMods) {
+function checkValidFreemodRules(player, allowedMods) {
     const allowedModsBitArray = allowedMods.map(mod => Banchojs.BanchoMods.parseShortMods(mod));
-    // for (const p in playerArray) {
-    //     const playerMods = Banchojs.BanchoMods.parseBitFlags(p.mods.enumValue);
-        
-    //     if (!allowedModsBitArray.includes(playerMods)) return false;
-    // }
+    console.log(allowedModsBitArray);
 
-    const playerMods = Banchojs.BanchoMods.parseBitFlags(p.mods.enumValue);
+    const playerMods = Banchojs.BanchoMods.parseBitFlags(player.mods.enumValue);
+    console.log(playerMods);
     
     if (!allowedModsBitArray.includes(playerMods)) return false;
 

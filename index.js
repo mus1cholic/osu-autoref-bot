@@ -293,6 +293,8 @@ async function banPhase(firstToBan, firstToPick, data) {
     if (data.optional.bans === "0") {
         channel.removeListener("message", this.eventListener);
         await pickPhase(firstToPick, available_bans, data);
+
+        return;
     }
 
     await channel.sendMessage(fetchmsg.fetchMessage("ban_start").replace("<player_name>", firstToBan)
@@ -443,8 +445,12 @@ async function pickPhase(firstToPick, maps, data) {
     lobby.on("allPlayersReady", this.eventListener = async (obj) => {
         if (!currentMapPlayed) {
             if (freemod) {
-                for (const p in lobby.slots) {
-                    if (!helpers.checkValidFreemodRules(lobby.slots, Object.keys(data.optional.fm_allowed_mods_multiplier))) {
+                console.log(lobby.slots);
+                for (const p of lobby.slots) {
+                    console.log(p);
+                    if (p === null) continue;
+
+                    if (!helpers.checkValidFreemodRules(p, Object.keys(data.optional.fm_allowed_mods_multiplier))) {
                         await channel.sendMessage(fetchmsg.fetchMessage("fm_player_wrong_mods")
                                                           .replace("<player_name>", p.user.ircUsername)
                                                           .replace("<allowed_mods>",
