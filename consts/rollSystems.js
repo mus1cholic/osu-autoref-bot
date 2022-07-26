@@ -37,7 +37,8 @@ async function ukcc(rollWinner, rollLoser, data, channel, myEmitter) {
 
     // TODO: .replace("p", "P").replace("b", "B")
     await channel.sendMessage(fetchmsg.fetchMessage("roll_winner_sequence").replace("<player_name>", rollWinner)
-                                                                           .replace("<sequence>", helpers.printStringArray(choices)));
+                                                                           .replace("<sequence>", helpers.printStringArray(choices)
+                                                                           .replaceAll("p", "P").replaceAll("b", "B")));
 
     // read in pick/ban order choice from user
     channel.on("message", this.eventListener = async (message) => {
@@ -60,8 +61,7 @@ async function ukcc(rollWinner, rollLoser, data, channel, myEmitter) {
         if (!choices.includes(content.toLowerCase())) {
             await channel.sendMessage(fetchmsg.fetchMessage("roll_sequence_wrong_id").replace("<player_name>", sender.ircUsername)
                                                             .replace("<sequence>", helpers.printStringArray(choices))
-                                                            .replace("p", "P")
-                                                            .replace("b", "B"));
+                                                            .replaceAll("p", "P").replaceAll("b", "B"));
             return;
         }
 
@@ -94,7 +94,8 @@ async function ukcc(rollWinner, rollLoser, data, channel, myEmitter) {
             currentTurn = currentTurn === rollWinner ? rollLoser : rollWinner;
 
             await channel.sendMessage(fetchmsg.fetchMessage("roll_loser_sequence").replace("<player_name>", rollLoser)
-                                              .replace("<sequence>", helpers.printStringArray(choices)));
+                                              .replace("<sequence>", helpers.printStringArray(choices)
+                                              .replaceAll("p", "P").replaceAll("b", "B")));
         }
     });
 }

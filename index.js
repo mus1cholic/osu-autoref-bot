@@ -176,6 +176,7 @@ async function interruptStartTimeout() {
     clearTimeout(currentTimeout);
     currentTimeout = null;
 }
+
 async function createLobbyListeners(data) {
     // the lobby can only be "full" if the last action is a player joining, so we don't
     // need any other lobby listeners like playerLeft
@@ -226,8 +227,6 @@ async function rollPhase(data) {
     channel.on("message", this.eventListener = async (msg) => {
         // thanks @clxxiii for this piece of code
 
-        console.log(rolls);
-
         const content = msg.message;
         const sender = msg.user;
 
@@ -258,8 +257,6 @@ async function rollPhase(data) {
         if (rolls[data.required.teams.team_1.team_name] !== -1 && rolls[data.required.teams.team_2.team_name] !== 0) {
             channel.removeListener("message", this.eventListener);
 
-            console.log(rolls);
-
             const rollWinner = rolls[data.required.teams.team_1.team_name] > rolls[data.required.teams.team_2.team_name]
                                                                            ? data.required.teams.team_1.team_name
                                                                            : data.required.teams.team_2.team_name;
@@ -276,8 +273,6 @@ async function determineBanPickSequencePhase(rollWinner, rollLoser, data) {
 
     myEmitter.once('determinedBanPickSequence', this.eventListener = async (sequence) => {
         myEmitter.removeListener("determinedBanPickSequence", this.eventListener);
-
-        console.log(sequence);
 
         await banPhase(sequence.banFirst, sequence.pickFirst, data);  
     });
@@ -598,6 +593,8 @@ async function close() {
     console.log("Closing...");
     await client.disconnect();
     console.log("Closed.");
+
+    process.exit(0);
 }
 
 init().then(() => {
