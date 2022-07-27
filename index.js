@@ -460,28 +460,30 @@ async function pickPhase(firstToPick, maps) {
                     }
                 }
             }
-
+            
             lobby.startMatch(CONSTANTS.TEN_SECS);
         }
     })
 
     // detect when the map is finished
     lobby.on("matchFinished", this.eventListener = async (playerScores) => {
+        await lobby.updateSettings();
+
         let team_1_score = 0;
         let team_2_score = 0;
 
         currentMapPlayed = true;
 
         for (const s of playerScores) {
-            const score = s.score;
+            let score = s.score;
             const banchoPlayer = s.player;
 
+            console.log(banchoPlayer);
+
             if (lobby.freemod) {
-                const mods = banchoPlayer.mods.shortMod.replace(" ", "").replace(",", "");
+                const mods = helpers.modArrayToShortModString(banchoPlayer.mods, true);
                 score *= data.optional.fm_allowed_mods_multiplier[mods];
             }
-
-            console.log(score);
 
             if (data.required.teams.team_1.player_names.includes(helpers.determineTeam(banchoPlayer.user.ircUsername, data.required.teams))) {
                 team_1_score += score;

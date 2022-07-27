@@ -55,6 +55,18 @@ function determineMod(str, score_mode) {
     return [Banchojs.BanchoMods.parseShortMods(prefix), freemod];
 }
 
+function modArrayToShortModString(arr, removeNoFail) {
+    let ret = "";
+
+    for (const mod of arr) {
+        if (removeNoFail && mod.shortMod === "nf") continue;
+
+        ret += mod.shortMod;
+    }
+
+    return ret;
+}
+
 function checkValidFreemodRules(player, allowedMods) {
     const allowedModsBitArray = allowedMods.map(mod => Banchojs.BanchoMods.returnBitFlags(
                                                        Banchojs.BanchoMods.parseShortMods(mod)));
@@ -115,6 +127,7 @@ module.exports = {
     printStringDict,
     determineTeam,
     determineMod,
+    modArrayToShortModString,
     checkValidFreemodRules,
     checkPickBanSequenceKeywords,
     checkPoolPickBanKeywords
