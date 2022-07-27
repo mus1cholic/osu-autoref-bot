@@ -13,6 +13,7 @@ const tournamentConfig = require('./tournament_config.json');
 
 const client = new Banchojs.BanchoClient(ircConfig);
 let channel, lobby;
+let data;
 
 let currentTimeout; // match phases are linear so we don't need to initialize as array
 
@@ -66,18 +67,18 @@ async function init() {
 
     console.log("Parsing match data json...");
 
-    const data = reorderData(tournamentConfig);
+    data = reorderData(tournamentConfig);
 
     console.log("Successfully parsed match data. Setting up match lobby 15 minutes before match starts...");
 
     // TODO: is this a good place to put settimeout?
     setTimeout(function() {
         console.log("Setting up match now...");
-        setupMatch(data);
+        setupMatch();
     }, data.required.date - Date.now() <= 0 ? 0 : data.required.date - Date.now());
 }
 
-async function setupMatch(data) {
+async function setupMatch() {
     // 15 minutes before match time, the bot creates and setups the lobby
 
     channel = await client.createLobby(`${data.required.tournament_initials}: (${data.required.teams.team_1.team_name}) vs (${data.required.teams.team_2.team_name})`)
@@ -162,7 +163,7 @@ async function setupMatch(data) {
 
     // TODO: fix an issue where if both player joins before this is called,
     // the match does not automatically start
-    await createLobbyListeners(data);
+    await createLobbyListeners();
 }
 
 async function startTimeout(func, seconds, dest) {
@@ -177,7 +178,7 @@ async function interruptStartTimeout() {
     currentTimeout = null;
 }
 
-async function createLobbyListeners(data) {
+async function createLobbyListeners() {
     // the lobby can only be "full" if the last action is a player joining, so we don't
     // need any other lobby listeners like playerLeft
     // TODO: assign teams
@@ -211,12 +212,12 @@ async function createLobbyListeners(data) {
 
             await channel.sendMessage(fetchmsg.fetchMessage("roll_start"));
             
-            await rollPhase(data);
+            await rollPhase();
         }
     });
 }
 
-async function rollPhase(data) {
+async function rollPhase() {
     let rollVerification = {};
     let rolls = {};
 
@@ -263,24 +264,24 @@ async function rollPhase(data) {
             const rollLoser = rollWinner === data.required.teams.team_1.team_name ? data.required.teams.team_2.team_name
                                                                                   : data.required.teams.team_1.team_name;
             
-            await determineBanPickSequencePhase(rollWinner, rollLoser, data);
+            await determineBanPickSequencePhase(rollWinner, rollLoser);
         } 
     });
 }
 
-async function determineBanPickSequencePhase(rollWinner, rollLoser, data) {
+async function determineBanPickSequencePhase(rollWinner, rollLoser) {
     // set up an internal event listener to call functions within listeners between files
 
     myEmitter.once('determinedBanPickSequence', this.eventListener = async (sequence) => {
         myEmitter.removeListener("determinedBanPickSequence", this.eventListener);
 
-        await banPhase(sequence.banFirst, sequence.pickFirst, data);  
+        await banPhase(sequence.banFirst, sequence.pickFirst);  
     });
 
     rollSystems.processRollSystems(rollWinner, rollLoser, data, channel, myEmitter);
 }
 
-async function banPhase(firstToBan, firstToPick, data) {
+async function banPhase(firstToBan, firstToPick) {
     let banTeam = firstToBan
     let banTurn = 1;
     let team_1_bans = [];
@@ -292,7 +293,7 @@ async function banPhase(firstToBan, firstToPick, data) {
     // we first check if there will be bans in the tournament
     if (data.optional.bans === "0") {
         channel.removeListener("message", this.eventListener);
-        await pickPhase(firstToPick, available_bans, data);
+        await pickPhase(firstToPick, available_bans);
 
         return;
     }
@@ -350,7 +351,7 @@ async function banPhase(firstToBan, firstToPick, data) {
             }
             data.required.pool = available_maps;
             channel.removeListener("message", this.eventListener);
-            await pickPhase(firstToPick, available_bans, data);
+            await pickPhase(firstToPick, available_bans);
         } else {
             // change banTeam and increment banTurn
             // await lobby.abortTimer(); // don't need this since we're setting a new timer immediately after
@@ -369,7 +370,7 @@ async function banPhase(firstToBan, firstToPick, data) {
     });
 }
 
-async function pickPhase(firstToPick, maps, data) {
+async function pickPhase(firstToPick, maps) {
     let pickTeam = firstToPick;
     let pickTurn = 1;
     let temporaryStopRecievingMessage = false;
@@ -443,11 +444,11 @@ async function pickPhase(firstToPick, maps, data) {
 
     // detect if players are ready and the new map is chosen
     lobby.on("allPlayersReady", this.eventListener = async (obj) => {
+        await lobby.updateSettings();
+
         if (!currentMapPlayed) {
             if (freemod) {
-                console.log(lobby.slots);
                 for (const p of lobby.slots) {
-                    console.log(p);
                     if (p === null) continue;
 
                     if (!helpers.checkValidFreemodRules(p, Object.keys(data.optional.fm_allowed_mods_multiplier))) {
@@ -471,10 +472,16 @@ async function pickPhase(firstToPick, maps, data) {
 
         currentMapPlayed = true;
 
-        // TODO: calculate scores
         for (const s of playerScores) {
             const score = s.score;
             const banchoPlayer = s.player;
+
+            if (lobby.freemod) {
+                const mods = banchoPlayer.mods.shortMod.replace(" ", "").replace(",", "");
+                score *= data.optional.fm_allowed_mods_multiplier[mods];
+            }
+
+            console.log(score);
 
             if (data.required.teams.team_1.player_names.includes(helpers.determineTeam(banchoPlayer.user.ircUsername, data.required.teams))) {
                 team_1_score += score;
@@ -517,6 +524,7 @@ async function pickPhase(firstToPick, maps, data) {
                 await close();
             }, CONSTANTS.ONE_MIN_MS);
         } else if (match_score[0] === match_score[1] && match_score[0] + match_score[1] === data.required.bo - 1) {
+            // tiebreaker
 
             await channel.sendMessage(fetchmsg.fetchMessage("score").replace("<team_1_name>", data.required.teams.team_1.team_name)
                                               .replace("<team_1_score>", match_score[0])
@@ -529,7 +537,16 @@ async function pickPhase(firstToPick, maps, data) {
             // available_picks.splice(available_picks.indexOf(content), 1);
 
             lobby.setMap(data.required.pool["tb"]);
-            lobby.setMods(helpers.determineMod("nm", data.optional.score_mode), true);
+
+            // TODO: fix this
+            const mods = helpers.determineMod("nm", data.optional.score_mode);
+            freemod = mods[1];
+
+            lobby.setMods(mods[0], freemod);
+
+            if (freemod) await channel.sendMessage(fetchmsg.fetchMessage("fm_allowed_mods_multiplier")
+                                                           .replace("<allowed_mods>",
+                                                           helpers.printStringDict(data.optional.fm_allowed_mods_multiplier)));
     
             currentMapPlayed = false;
     

@@ -10,9 +10,9 @@
                 "player_names": ["lolol234"]
             },
             "team_2": {
-                "team_name": "lolol234",
+                "team_name": "lolol233",
                 "player_ids": ["5791401"],
-                "player_names": ["lolol234"]
+                "player_names": ["lolol233"]
             }
         },
         "pool": {
@@ -38,7 +38,7 @@
             "fm1": "3677312",
             "fm2": "2959643",
             "fm3": "3228701",
-            "tb": "3333745"
+            "tb": "315"
         },
         "pool_temp": {
             "nm1": "315",
@@ -71,7 +71,7 @@
         "score_mode": "v2",
         "forfeit_time": "600",
         "fails_count": "true",
-        "bans": "0",
+        "bans": "2",
         "roll_system": "ukcc",
         "ban_pick_time": "90",
         "map_wait_time": "90",
@@ -80,9 +80,9 @@
         "fm_allowed_mods_multiplier": {
             "hd": "1.00",
             "hr": "1.00",
-            "ez": "0.75",
+            "ez": "1.60",
             "hdhr": "1.00",
-            "hdez": "1.00"
+            "hdez": "1.80"
         }
     }
 }

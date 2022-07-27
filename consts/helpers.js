@@ -27,6 +27,8 @@ function printStringDict(dict) {
 
         ret += `${key}: ${value}, `
     });
+
+    return ret;
 }
 
 function determineTeam(playerName, teams) {
@@ -43,7 +45,7 @@ function determineMod(str, score_mode) {
     let prefix = str.substring(0, 2);
     let freemod = false;
 
-    if (prefix === "fm") {
+    if (prefix === "fm" || prefix === "tb") {
         prefix = "nm";
         freemod = true;
     }
@@ -54,13 +56,18 @@ function determineMod(str, score_mode) {
 }
 
 function checkValidFreemodRules(player, allowedMods) {
-    const allowedModsBitArray = allowedMods.map(mod => Banchojs.BanchoMods.parseShortMods(mod));
-    console.log(allowedModsBitArray);
+    const allowedModsBitArray = allowedMods.map(mod => Banchojs.BanchoMods.returnBitFlags(
+                                                       Banchojs.BanchoMods.parseShortMods(mod)));
 
-    const playerMods = Banchojs.BanchoMods.parseBitFlags(player.mods.enumValue);
-    console.log(playerMods);
+    let playerModsEnum = 0;
     
-    if (!allowedModsBitArray.includes(playerMods)) return false;
+    for (const mod of player.mods) {
+        if (mod.shortMod === "nf") continue;
+
+        playerModsEnum += mod.enumValue;
+    };
+    
+    if (!allowedModsBitArray.includes(playerModsEnum)) return false;
 
     return true;
 }
